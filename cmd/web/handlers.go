@@ -114,3 +114,38 @@ func (app *application) snippetCreatePost(w http.ResponseWriter, r *http.Request
 
 	http.Redirect(w, r, fmt.Sprintf("/snippet/view/%d", id), http.StatusSeeOther)
 }
+
+func (app *application) userSignup(w http.ResponseWriter, r *http.Request) {
+	_, err := fmt.Fprintln(w, "At userSignup")
+	if err != nil {
+		return
+	}
+}
+
+func (app *application) userSignupPost(w http.ResponseWriter, r *http.Request) {
+	_, err := fmt.Fprintln(w, "At userSignupPost")
+	if err != nil {
+		return
+	}
+}
+
+func (app *application) userLogin(w http.ResponseWriter, r *http.Request) {
+	_, err := fmt.Fprintln(w, "At userLogin")
+	if err != nil {
+		return
+	}
+}
+
+func (app *application) userLoginPost(w http.ResponseWriter, r *http.Request) {
+	_, err := fmt.Fprintln(w, "At userLoginPost")
+	if err != nil {
+		return
+	}
+}
+
+func (app *application) userLogoutPost(w http.ResponseWriter, r *http.Request) {
+	_, err := fmt.Fprintln(w, "At userLogoutPost")
+	if err != nil {
+		return
+	}
+}
