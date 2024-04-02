@@ -26,10 +26,12 @@ import (
 // make the SnippetModel object available to our handlers.
 // Add a formDecoder field to hold a pointer to a form.Decoder instance.
 // Add a new sessionManager field to the application struct.
+// Add a new users field to the application struct.
 type application struct {
 	errorLog       *log.Logger
 	infoLog        *log.Logger
 	snippets       *models.SnippetModel
+	users          *models.UserModel
 	templateCache  map[string]*template.Template
 	formDecoder    *form.Decoder
 	sessionManager *scs.SessionManager
@@ -74,10 +76,13 @@ func main() {
 
 	// Initialize a models.SnippetModel instance and add it to the application
 	// dependencies.
+	// Initialize a models.UserModel instance and add it to the application
+	// dependencies
 	app := &application{
 		errorLog:       errorLog,
 		infoLog:        infoLog,
 		snippets:       &models.SnippetModel{DB: db},
+		users:          &models.UserModel{DB: db},
 		templateCache:  templateCache,
 		formDecoder:    formDecoder,
 		sessionManager: sessionManager,
