@@ -4,22 +4,24 @@ import (
 	"crypto/tls"
 	"database/sql"
 	"flag"
-	"github.com/alexedwards/scs/mysqlstore" // New import
-	"github.com/alexedwards/scs/v2"         // New import
-	"github.com/go-playground/form/v4"
 	"html/template"
 	"log"
 	"net/http"
 	"os"
 	"time"
 
+	"github.com/alexedwards/scs/mysqlstore" // New import
+	"github.com/alexedwards/scs/v2"         // New import
+	"github.com/go-playground/form/v4"
+
 	// Import the models package that we just created. You need to prefix this with
 	// whatever module path you set up back in chapter 02.01 (Project Setup and Creating
 	// a Module) so that the import statement looks like this:
 	// "{your-module-path}/internal/models". If you can't remember what module path you
 	// used, you can find it at the top of the go.mod file.
-	_ "github.com/go-sql-driver/mysql"
 	"snippetbox/internal/models"
+
+	_ "github.com/go-sql-driver/mysql"
 )
 
 // Add a snippets field to the application struct. This will allow us to
