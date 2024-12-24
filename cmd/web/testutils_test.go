@@ -2,12 +2,16 @@ package main
 
 import (
 	"bytes"
+	"github.com/alexedwards/scs/v2"
+	"github.com/go-playground/form/v4"
 	"io"
 	"log"
 	"net/http"
 	"net/http/cookiejar"
 	"net/http/httptest"
+	"snippetbox/internal/models/mocks"
 	"testing"
+	"time"
 )
 
 // Define a custom testServer type which embeds a httptest.Server instance.
@@ -18,9 +22,28 @@ type testServer struct {
 // Create a newTestApplication helper which returns an instance of our
 // application struct containing mocked dependencies.
 func newTestApplication(t *testing.T) *application {
+	// Create an instance of the template cache
+	templateCache, err := newTemplateCache()
+	if err != nil {
+		t.Fatal(err)
+	}
+
+	// Create an instance of the form decoder
+	formDecoder := form.NewDecoder()
+
+	// Create a sessionManager instance
+	sessionManager := scs.New()
+	sessionManager.Lifetime = 12 * time.Hour
+	sessionManager.Cookie.Secure = true
+
 	return &application{
-		errorLog: 	log.New(io.Discard, "", 0),
-		infoLog: 	log.New(io.Discard, "", 0),
+		errorLog:       log.New(io.Discard, "", 0),
+		infoLog:        log.New(io.Discard, "", 0),
+		templateCache:  templateCache,
+		formDecoder:    formDecoder,
+		sessionManager: sessionManager,
+		snippets:       &mocks.SnippetModel{},
+		users:          &mocks.UserModel{},
 	}
 }
 
@@ -45,8 +68,8 @@ func newTestServer(t *testing.T, h http.Handler) *testServer {
 	// response is received by the client, and by always returning a
 	// http.ErrUseLastResponse error it forces the client to immediately return
 	// the received response.
-	ts.Client().CheckRedirect = func (req *http.Request, via []*http.Request) error {
-		return http.ErrUseLastResponse	
+	ts.Client().CheckRedirect = func(req *http.Request, via []*http.Request) error {
+		return http.ErrUseLastResponse
 	}
 
 	return &testServer{ts}
