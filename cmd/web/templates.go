@@ -9,11 +9,7 @@ import (
 	"time"
 )
 
-// Define a templateData type to act as the holding structure for
-// any dynamic data that we want to pass to our HTML templates.
-// At the moment it only contains one field, but we'll add more
-// to it as the build progresses.
-// Add a Form field with the type "any".
+// A templateData type to act as the holding structure for any dynamic data passed to HTML templates.
 type templateData struct {
 	CurrentYear     int
 	Snippet         *models.Snippet
@@ -24,8 +20,7 @@ type templateData struct {
 	CSRFToken       string // Add a CSRFToken field
 }
 
-// Create a humanDate function which returns a nicely formatted string
-// representation of a time.Time object.
+// A humanDate function which returns a formatted string representation of a time.Time object.
 func humanDate(t time.Time) string {
 	if t.IsZero() {
 		return ""
@@ -34,8 +29,7 @@ func humanDate(t time.Time) string {
 	return t.UTC().Format("02 Jan 2006 at 15:04")
 }
 
-// Initialize a template.FuncMap object and store it in a global variable. This is
-// essentially a string-keyed map which acts as a lookup between the names of our
+// Essentially a string-keyed map which acts as a lookup between the names of our
 // custom template functions and the functions themselves.
 var functions = template.FuncMap{
 	"humanDate": humanDate,
@@ -60,7 +54,7 @@ func newTemplateCache() (map[string]*template.Template, error) {
 			page,
 		}
 
-		// Use ParseFS() instead of ParseFiles() to parse template files from the ui.Files embedded filesystem
+		// Using ParseFS() instead of ParseFiles() to parse template files from the ui.Files EFS
 		ts, err := template.New(name).Funcs(functions).ParseFS(ui.Files, patterns...)
 		if err != nil {
 			return nil, err

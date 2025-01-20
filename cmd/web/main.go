@@ -10,26 +10,17 @@ import (
 	"os"
 	"time"
 
-	"github.com/alexedwards/scs/mysqlstore" // New import
-	"github.com/alexedwards/scs/v2"         // New import
+	"github.com/alexedwards/scs/mysqlstore"
+	"github.com/alexedwards/scs/v2"
 	"github.com/go-playground/form/v4"
 
-	// Import the models package that we just created. You need to prefix this with
-	// whatever module path you set up back in chapter 02.01 (Project Setup and Creating
-	// a Module) so that the import statement looks like this:
-	// "{your-module-path}/internal/models". If you can't remember what module path you
-	// used, you can find it at the top of the go.mod file.
 	"snippetbox/internal/models"
 
 	_ "github.com/go-sql-driver/mysql"
 )
 
-// Add a snippets field to the application struct. This will allow us to
-// make the SnippetModel object available to our handlers.
-// Add a formDecoder field to hold a pointer to a form.Decoder instance.
-// Add a new sessionManager field to the application struct.
-// Add a new users field to the application struct.
 type application struct {
+	debug          *bool
 	errorLog       *log.Logger
 	infoLog        *log.Logger
 	snippets       models.SnippetModelInterface
@@ -42,6 +33,7 @@ type application struct {
 func main() {
 	addr := flag.String("addr", ":4000", "HTTP network address")
 	dsn := flag.String("dsn", "web:pass@/snippetbox?parseTime=true", "MySQL data source name")
+	debug := flag.Bool("debug", false, "Enables debug mode (stack traces)")
 
 	flag.Parse()
 
@@ -59,7 +51,6 @@ func main() {
 		errorLog.Fatal(err)
 	}
 
-	// Initialize a decoder instance...
 	formDecoder := form.NewDecoder()
 
 	// Use the scs.New() function to initialize a new session manager. Then we
@@ -76,11 +67,8 @@ func main() {
 	// unsecure HTTP connection).
 	sessionManager.Cookie.Secure = true
 
-	// Initialize a models.SnippetModel instance and add it to the application
-	// dependencies.
-	// Initialize a models.UserModel instance and add it to the application
-	// dependencies
 	app := &application{
+		debug:          debug,
 		errorLog:       errorLog,
 		infoLog:        infoLog,
 		snippets:       &models.SnippetModel{DB: db},
@@ -98,9 +86,6 @@ func main() {
 		CurvePreferences: []tls.CurveID{tls.X25519, tls.CurveP256},
 	}
 
-	// Set the server's TLSConfig field to use the tlsConfig variable we just
-	// created.
-	// Add Idle, Read and Write timeouts to the server.
 	srv := &http.Server{
 		Addr:         *addr,
 		ErrorLog:     errorLog,
@@ -113,9 +98,6 @@ func main() {
 
 	infoLog.Printf("Starting server on %s", *addr)
 
-	// Use the ListenAndServeTLS() method to start the HTTPS server. We
-	// pass in the paths to the TLS certificate and corresponding private key as
-	// the two parameters.
 	err = srv.ListenAndServeTLS("./tls/cert.pem", "./tls/key.pem")
 	errorLog.Fatal(err)
 }

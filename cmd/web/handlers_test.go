@@ -78,18 +78,6 @@ func TestSnippetView(t *testing.T) {
 	}
 }
 
-//func TestUserSignup(t *testing.T) {
-//	app := newTestApplication(t)
-//
-//	ts := newTestServer(t, app.routes())
-//	defer ts.Close()
-//
-//	_, _, body := ts.get(t, "/user/signup")
-//	csrfToken := extractCSRFToken(t, body)
-//
-//	t.Logf("CSRF token: %q", csrfToken)
-//}
-
 func TestUserSignup(t *testing.T) {
 	app := newTestApplication(t)
 	ts := newTestServer(t, app.routes())
@@ -200,4 +188,36 @@ func TestUserSignup(t *testing.T) {
 			}
 		})
 	}
+}
+
+func TestSnippetCreate(t *testing.T) {
+	app := newTestApplication(t)
+	ts := newTestServer(t, app.routes())
+	defer ts.Close()
+
+	t.Run("Unauthorized Snippet Create", func(t *testing.T) {
+		code, header, _ := ts.get(t, "/snippet/create")
+		assert.Equal(t, code, http.StatusSeeOther)
+		assert.Equal(t, header.Get("Location"), "/user/login")
+	})
+
+	t.Run("Authorized Snippet Create", func(t *testing.T) {
+		// Grab csrf token
+		_, _, body := ts.get(t, "/user/signup")
+		validCSRFToken := extractCSRFToken(t, body)
+
+		// Prep and make authn request
+		form := url.Values{}
+		form.Add("email", "alice@example.com")
+		form.Add("password", "p@ssw0rd")
+		form.Add("csrf_token", validCSRFToken)
+
+		code, _, _ := ts.postForm(t, "/user/login", form)
+		assert.Equal(t, code, http.StatusSeeOther)
+
+		code, _, body = ts.get(t, "/snippet/create")
+		assert.Equal(t, code, http.StatusOK)
+		assert.StringContains(t, body, "<form action='/snippet/create' method='POST'>")
+
+	})
 }

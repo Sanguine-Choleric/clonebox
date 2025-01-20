@@ -20,5 +20,5 @@ ALTER TABLE users
 INSERT INTO users (name, email, hashed_password, created)
 VALUES ('Alice Jones',
         'alice@example.com',
-        '$2a$12$NuTjWXm3KKntReFwyBVHyuf/to.HEwTy.eS206TNfkGfr6HzGJSWG',
+        '$2a$12$RB1A2rdzmXNzt5uPOU9hWOgojGbYCWlV3jJj6474KhdRM947r/gwC',
         '2022-01-01 10:00:00');

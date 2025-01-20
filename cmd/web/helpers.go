@@ -16,6 +16,11 @@ import (
 func (app *application) serverError(w http.ResponseWriter, err error) {
 	trace := fmt.Sprintf("%s\n%s", err.Error(), debug.Stack())
 	app.errorLog.Output(2, trace)
+
+	if *app.debug {
+		http.Error(w, trace, http.StatusInternalServerError)
+		return
+	}
 	http.Error(w, http.StatusText(http.StatusInternalServerError), http.StatusInternalServerError)
 }
 
@@ -26,9 +31,7 @@ func (app *application) clientError(w http.ResponseWriter, status int) {
 	http.Error(w, http.StatusText(status), status)
 }
 
-// For consistency, we'll also implement a notFound helper. This is simply a
-// convenience wrapper around clientError which sends a 404 Not Found response to
-// the user.
+// Just a convenience wrapper around clientError which sends a 404 Not Found response to the user.
 func (app *application) notFound(w http.ResponseWriter) {
 	app.clientError(w, http.StatusNotFound)
 }
@@ -57,15 +60,10 @@ func (app *application) render(w http.ResponseWriter, status int, page string, d
 	// to go ahead and write the HTTP status code to http.ResponseWriter.
 	w.WriteHeader(status)
 
-	// Write the contents of the buffer to the http.ResponseWriter. Note: this
-	// is another time where we pass our http.ResponseWriter to a function that
-	// takes an io.Writer.
+	// Write the contents of the buffer to the http.ResponseWriter
 	buf.WriteTo(w)
 }
 
-// Create an newTemplateData() helper, which returns a pointer to a templateData
-// struct initialized with the current year. Note that we're not using the
-// *http.Request parameter here at the moment, but we will do later in the book.
 func (app *application) newTemplateData(r *http.Request) *templateData {
 	return &templateData{
 		CurrentYear:     time.Now().Year(),
@@ -75,11 +73,7 @@ func (app *application) newTemplateData(r *http.Request) *templateData {
 	}
 }
 
-// Create a new decodePostForm() helper method. The second parameter here, dst,
-// is the target destination that we want to decode the form data into.
 func (app *application) decodePostForm(r *http.Request, dst any) error {
-	// Call ParseForm() on the request, in the same way that we did in our
-	// createSnippetPost handler.
 	err := r.ParseForm()
 	if err != nil {
 		return err
@@ -105,8 +99,7 @@ func (app *application) decodePostForm(r *http.Request, dst any) error {
 	return nil
 }
 
-// Return true if the current request is from an authenticated user, otherwise
-// return false
+// Return true if the current request is from an authenticated user, otherwise return false
 func (app *application) isAuthenticated(r *http.Request) bool {
 	isAuthenticated, ok := r.Context().Value(isAuthenticatedContextKey).(bool)
 	if !ok {
