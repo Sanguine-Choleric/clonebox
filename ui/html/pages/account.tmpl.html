@@ -1,0 +1,22 @@
+{{define "title"}}Account{{end}}
+{{define "main"}}
+    <h2>Account</h2>
+    {{with .User}}
+        <table>
+            <tbody>
+            <tr>
+                <th scope="row">Name</th>
+                <td>{{.Name}}</td>
+            </tr>
+            <tr>
+                <th scope="Email">Email</th>
+                <td>{{.Email}}</td>
+            </tr>
+            <tr>
+                <th scope="Created">Created</th>
+                <td>{{humanDate .Created}}</td>
+            </tr>
+            </tbody>
+        </table>
+    {{end}}
+{{end}}

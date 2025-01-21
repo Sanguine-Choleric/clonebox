@@ -4,6 +4,11 @@ import "snippetbox/internal/models"
 
 type UserModel struct{}
 
+func (m *UserModel) Get(id int) (*models.User, error) {
+	//TODO implement me
+	panic("implement me")
+}
+
 func (m *UserModel) Insert(name, email, password string) error {
 	switch email {
 	case "dupe@mock.com":
