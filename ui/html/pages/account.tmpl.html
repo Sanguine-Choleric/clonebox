@@ -9,12 +9,16 @@
                 <td>{{.Name}}</td>
             </tr>
             <tr>
-                <th scope="Email">Email</th>
+                <th scope="row">Email</th>
                 <td>{{.Email}}</td>
             </tr>
             <tr>
-                <th scope="Created">Created</th>
+                <th scope="row">Created</th>
                 <td>{{humanDate .Created}}</td>
+            </tr>
+            <tr>
+                <th scope="row">Password</th>
+                <td><a href="/account/password/update">Change Password</a></td>
             </tr>
             </tbody>
         </table>

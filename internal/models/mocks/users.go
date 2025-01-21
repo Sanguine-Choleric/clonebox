@@ -4,6 +4,11 @@ import "snippetbox/internal/models"
 
 type UserModel struct{}
 
+func (m *UserModel) PasswordUpdate(id int, currentPassword string, newPassword string) error {
+	//TODO implement me
+	panic("implement me")
+}
+
 func (m *UserModel) Get(id int) (*models.User, error) {
 	//TODO implement me
 	panic("implement me")

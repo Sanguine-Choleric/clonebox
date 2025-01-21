@@ -14,6 +14,7 @@ type UserModelInterface interface {
 	Authenticate(email, password string) (int, error)
 	Exists(id int) (bool, error)
 	Get(id int) (*User, error)
+	PasswordUpdate(id int, currentPassword string, newPassword string) error
 }
 
 // User field names and types align with the columns in the database "users" table
@@ -108,12 +109,62 @@ func (m *UserModel) Get(id int) (*User, error) {
 
 	stmt := `SELECT id, name, email, created FROM users WHERE id = ?`
 	err := m.DB.QueryRow(stmt, id).Scan(&user.ID, &user.Name, &user.Email, &user.Created)
-	if errors.Is(err, sql.ErrNoRows) {
-		return nil, ErrNoRecord
-	} else if err != nil {
-		return nil, err
+	//if errors.Is(err, sql.ErrNoRows) {
+	//	return nil, ErrNoRecord
+	//} else if err != nil {
+	//	return nil, err
+	//}
+	if err != nil {
+		if errors.Is(err, sql.ErrNoRows) {
+			return nil, ErrNoRecord
+		} else {
+			return nil, err
+		}
 	}
 
 	return &user, nil
 
+}
+
+func (m *UserModel) PasswordUpdate(id int, currentPassword string, newPassword string) error {
+	// Retrieve user from id
+	var user User
+	stmt := `SELECT * FROM users WHERE id = ?`
+	err := m.DB.QueryRow(stmt, id).Scan(&user.ID, &user.Name, &user.Email, &user.HashedPassword, &user.Created)
+	//if errors.Is(err, sql.ErrNoRows) {
+	//	return ErrNoRecord
+	//} else if err != nil {
+	//	return err
+	//}
+	if err != nil {
+		if errors.Is(err, sql.ErrNoRows) {
+			return ErrNoRecord
+		} else {
+			return err
+		}
+	}
+
+	// Check if currentPassword matches password stored in db
+	err = bcrypt.CompareHashAndPassword(user.HashedPassword, []byte(currentPassword))
+	if err != nil {
+		if errors.Is(err, bcrypt.ErrMismatchedHashAndPassword) {
+			return ErrInvalidCredentials
+		} else {
+			return err
+		}
+	}
+
+	// Update
+	hashedNewPassword, err := bcrypt.GenerateFromPassword([]byte(newPassword), 12)
+	if err != nil {
+		return err
+	}
+
+	stmt = `UPDATE users SET hashed_password = ? WHERE id = ?`
+	_, err = m.DB.Exec(stmt, string(hashedNewPassword), id)
+	if err != nil {
+		return err
+	}
+
+	return nil
 }
