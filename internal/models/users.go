@@ -46,9 +46,9 @@ func (m *UserModel) Insert(name, email, password string) error {
 	if err != nil {
 
 		// If this returns an error, errors.As() checks whether the error has the type *mysql.MySQLError. If it does, the
-		// error will be assigned to the mySQLError variable. Then checks whether the error relates to the
-		// users_uc_email key by checking if the error code equals 1062 and the contents of the error
-		// message string. If it does, returns an ErrDuplicateEmail error.
+		// error will be assigned to the mySQLError variable. Then check whether the error relates to the users_uc_email
+		// key by checking if the error code equals 1062 and the contents of the error message string. If it does,
+		// returns an ErrDuplicateEmail error.
 		var mySqlErr *mysql.MySQLError
 		if errors.As(err, &mySqlErr) {
 			if mySqlErr.Number == 1062 && strings.Contains(mySqlErr.Message, "users_uc_email") {
@@ -63,8 +63,7 @@ func (m *UserModel) Insert(name, email, password string) error {
 // Authenticate verifies whether a user exists with provided email address and password. This will return the relevant
 // user ID if they do.
 func (m *UserModel) Authenticate(email, password string) (int, error) {
-	// Retrieve the id and hashed password associated with the given email. If
-	// no matching email exists we return the ErrInvalidCredentials error
+	// Retrieve the id and hashed password associated with the given email. If no matching email exists, returns ErrInvalidCredentials
 	var id int
 	var hashedPassword []byte
 
@@ -79,8 +78,7 @@ func (m *UserModel) Authenticate(email, password string) (int, error) {
 		}
 	}
 
-	// Check whether the hashed password and plain-text password provided match.
-	// If they don't, we return the ErrInvalidCredentials error
+	// Check whether the hashed password and plain-text password provided match. If not, return the ErrInvalidCredentials
 	err = bcrypt.CompareHashAndPassword(hashedPassword, []byte(password))
 	if err != nil {
 		if errors.Is(err, bcrypt.ErrMismatchedHashAndPassword) {
@@ -90,7 +88,6 @@ func (m *UserModel) Authenticate(email, password string) (int, error) {
 		}
 	}
 
-	// Otherwise, the password is correct. Return the user ID.
 	return id, nil
 }
 

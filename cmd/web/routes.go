@@ -11,10 +11,8 @@ import (
 func (app *application) routes() http.Handler {
 	router := httprouter.New()
 
-	// Create a handler function which wraps our notFound() helper, and then
-	// assign it as the custom handler for 404 Not Found responses. You can also
-	// set a custom handler for 405 Method Not Allowed responses by setting
-	// router.MethodNotAllowed in the same way too.
+	// Creates a handler function which wraps the notFound() helper, and assigns it as the custom handler for 404 Not
+	// Found responses
 	router.NotFound = http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		app.notFound(w)
 	})
@@ -24,9 +22,9 @@ func (app *application) routes() http.Handler {
 	fileServer := http.FileServer(http.FS(ui.Files))
 
 	// Static files are contained in the "static" folder of the ui.Files embedded filesystem.
-	// E.g. CSS stylesheet is located at "static/css/main.css". This means that we now longer need to strip the prefix
-	// from the request URL -- any requests that start with /static/ can just be passed directly to the file server and
-	// the corresponding static file will be served (so long as it exists).
+	// E.g. CSS stylesheet is located at "static/css/main.css". This means that prefix doesn't need to be stripped from
+	// the request URL -- any requests that start with /static/ can just be passed directly to the file server and the
+	// corresponding static file will be served (so long as it exists).
 	router.Handler(http.MethodGet, "/static/*filepath", fileServer)
 
 	router.HandlerFunc(http.MethodGet, "/ping", ping)

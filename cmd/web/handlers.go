@@ -51,7 +51,6 @@ func (app *application) home(w http.ResponseWriter, r *http.Request) {
 	app.render(w, http.StatusOK, "home.tmpl.html", data)
 }
 
-// About page
 func (app *application) about(w http.ResponseWriter, r *http.Request) {
 	data := app.newTemplateData(r)
 	app.render(w, http.StatusOK, "about.tmpl.html", data)
@@ -138,7 +137,7 @@ func (app *application) userSignupPost(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	// Validate the form contents using helper functions.
+	// Validates the form contents using helper functions.
 	form.CheckField(validator.NotBlank(form.Name), "name", "This field cannot be blank")
 	form.CheckField(validator.NotBlank(form.Email), "email", "This field cannot be blank")
 	form.CheckField(validator.Matches(form.Email, validator.EmailRX), "email", "This field must be a valid email address")
@@ -232,18 +231,15 @@ func (app *application) userLoginPost(w http.ResponseWriter, r *http.Request) {
 }
 
 func (app *application) userLogoutPost(w http.ResponseWriter, r *http.Request) {
-	// Use the RenewToken() method on the current session to change the session
-	// ID again.
+	// Uses the RenewToken() method on the current session to change the session ID
 	err := app.sessionManager.RenewToken(r.Context())
 	if err != nil {
 		app.serverError(w, err)
 		return
 	}
 
-	// Remove the authenticatedUserID from the session data so that the user is logged out
 	app.sessionManager.Remove(r.Context(), "authenticatedUserId")
 
-	// Add a flash message to the session to confirm to the user that they've been logged out.
 	app.sessionManager.Put(r.Context(), "flash", "You've been logged out successfully")
 
 	http.Redirect(w, r, "/", http.StatusSeeOther)
@@ -267,7 +263,7 @@ func (app *application) accountView(w http.ResponseWriter, r *http.Request) {
 func (app *application) accountPasswordUpdate(w http.ResponseWriter, r *http.Request) {
 	data := app.newTemplateData(r)
 	data.Form = accountPasswordUpdateForm{}
-	app.render(w, http.StatusOK, "password.tmpl.html", data)
+	app.render(w, http.StatusOK, "change_password.tmpl.html", data)
 }
 
 func (app *application) accountPasswordUpdatePost(w http.ResponseWriter, r *http.Request) {
@@ -287,7 +283,7 @@ func (app *application) accountPasswordUpdatePost(w http.ResponseWriter, r *http
 	if !form.Valid() {
 		data := app.newTemplateData(r)
 		data.Form = form
-		app.render(w, http.StatusUnprocessableEntity, "password.tmpl.html", data)
+		app.render(w, http.StatusUnprocessableEntity, "change_password.tmpl.html", data)
 		return
 	}
 
@@ -298,7 +294,7 @@ func (app *application) accountPasswordUpdatePost(w http.ResponseWriter, r *http
 			form.AddFieldError("currentPassword", "Entered password is not your current password")
 			data := app.newTemplateData(r)
 			data.Form = form
-			app.render(w, http.StatusUnprocessableEntity, "password.tmpl.html", data)
+			app.render(w, http.StatusUnprocessableEntity, "change_password.tmpl.html", data)
 		} else {
 			app.serverError(w, err)
 		}

@@ -16,8 +16,8 @@ type templateData struct {
 	Snippets        []*models.Snippet
 	Form            any
 	Flash           string
-	IsAuthenticated bool   // Add an IsAuthenticated field to the templateData struct.
-	CSRFToken       string // Add a CSRFToken field
+	IsAuthenticated bool
+	CSRFToken       string
 	User            *models.User
 }
 
@@ -30,8 +30,8 @@ func humanDate(t time.Time) string {
 	return t.UTC().Format("02 Jan 2006 at 15:04")
 }
 
-// Essentially a string-keyed map which acts as a lookup between the names of our
-// custom template functions and the functions themselves.
+// Essentially a string-keyed map which acts as a lookup between the names of the custom template functions and the
+// functions themselves.
 var functions = template.FuncMap{
 	"humanDate": humanDate,
 }
@@ -48,7 +48,7 @@ func newTemplateCache() (map[string]*template.Template, error) {
 	for _, page := range pages {
 		name := filepath.Base(page)
 
-		// Create a slice containing the filepath patterns for the templates we want to parse
+		// Slice containing the filepath patterns for templates to be parsed
 		patterns := []string{
 			"html/base.tmpl.html",
 			"html/partials/*.tmpl.html",

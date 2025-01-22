@@ -29,7 +29,6 @@ func TestHumanDate(t *testing.T) {
 		},
 	}
 
-	// Loop over the test cases
 	for _, test := range tests {
 		t.Run(test.name, func(t *testing.T) {
 			hd := humanDate(test.tm)

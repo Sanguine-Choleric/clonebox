@@ -29,19 +29,12 @@ func (app *application) logRequest(next http.Handler) http.Handler {
 func (app *application) recoverPanic(next http.Handler) http.Handler {
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 
-		// Uses a deferred function (which will always be run in the event
-		// of a panic as Go unwinds the stack).
+		// Deferred function (which will always be run in the event of a panic as Go unwinds the stack)
 		defer func() {
 
-			// Use the builtin recover function to check if there has been a
-			// panic or not. If there has...
+			// Use the builtin recover function to check if there has been a panic
 			if err := recover(); err != nil {
-
-				// Set a "Connection: close" header on the response.
 				w.Header().Set("Connection", "close")
-
-				// Call the app.serverError helper method to return a 500
-				// Internal Server response.
 				app.serverError(w, fmt.Errorf("%s", err))
 			}
 		}()
@@ -52,18 +45,15 @@ func (app *application) recoverPanic(next http.Handler) http.Handler {
 func (app *application) requireAuthentication(next http.Handler) http.Handler {
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 
-		// If the user is not authenticated, redirect them to the login page and
-		// return from the middleware chain so that no subsequent handlers in
-		// the chain are executed.
+		// If the user is not authenticated, redirect them to the login page and return from the middleware chain so
+		// that no subsequent handlers in the chain are executed.
 		if !app.isAuthenticated(r) {
 			app.sessionManager.Put(r.Context(), "originalPath", r.URL.Path)
 			http.Redirect(w, r, "/user/login", http.StatusSeeOther)
 			return
 		}
 
-		// Otherwise set the "Cache-Control: no-store" header so that pages
-		// require authentication are not stored in the users browser cache (or
-		// other intermediary cache)
+		// Pages requiring authentication not stored in the users browser cache (or other intermediary cache)
 		w.Header().Add("Cache-Control", "no-store")
 
 		next.ServeHTTP(w, r)
@@ -85,34 +75,30 @@ func noSurf(next http.Handler) http.Handler {
 func (app *application) authenticate(next http.Handler) http.Handler {
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 
-		// Retrieve the authenticatedUserID value from the session using the
-		// GetInt() method. This will return the zero value for an int (0) if no
-		// "authenticatedUserID" value is in the session -- in which case we
-		// call the next handler in the chain as normal and return.
+		// Retrieves the authenticatedUserID value from the session using GetInt(). This will return the zero value for
+		// an int (0) if no "authenticatedUserID" value is in the session -- in which case we call the next handler in
+		// the chain as normal and return.
 		id := app.sessionManager.GetInt(r.Context(), "authenticatedUserId")
 		if id == 0 {
 			next.ServeHTTP(w, r)
 			return
 		}
 
-		// Otherwise, we check to see if a user with that ID exists in our
-		// database.
+		// Otherwise, check to see if a user with that ID exists in database.
 		exists, err := app.users.Exists(id)
 		if err != nil {
 			app.serverError(w, err)
 			return
 		}
 
-		// If a matching user is found, we know that the request is
-		// coming from an authenticated user who exists in our database. We
-		// create a new copy of the request (with an isAuthenticatedContextKey
-		// value of true in the request context) and assign it to r.
+		// If a matching user is found, we know that the request is coming from an authenticated user who exists in db.
+		// Also creates a new copy of the request (with an isAuthenticatedContextKey value of true in the request context)
+		// and assign it to r.
 		if exists {
 			ctx := context.WithValue(r.Context(), isAuthenticatedContextKey, true)
 			r = r.WithContext(ctx)
 		}
 
-		// Call the next handler in the chain.
 		next.ServeHTTP(w, r)
 	})
 }

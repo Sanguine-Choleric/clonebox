@@ -11,8 +11,8 @@ import (
 	"time"
 )
 
-// The serverError helper writes an error message and stack trace to the errorLog,
-// then sends a generic 500 Internal Server Error response to the user.
+// serverError helper writes an error message and stack trace to the errorLog, then sends a generic 500 Internal
+// Server Error response to the user
 func (app *application) serverError(w http.ResponseWriter, err error) {
 	trace := fmt.Sprintf("%s\n%s", err.Error(), debug.Stack())
 	app.errorLog.Output(2, trace)
@@ -24,14 +24,12 @@ func (app *application) serverError(w http.ResponseWriter, err error) {
 	http.Error(w, http.StatusText(http.StatusInternalServerError), http.StatusInternalServerError)
 }
 
-// The clientError helper sends a specific status code and corresponding description
-// to the user. We'll use this later in the book to send responses like 400 "Bad
-// Request" when there's a problem with the request that the user sent.
+// clientError helper sends a specific status code and corresponding description to the user
 func (app *application) clientError(w http.ResponseWriter, status int) {
 	http.Error(w, http.StatusText(status), status)
 }
 
-// Just a convenience wrapper around clientError which sends a 404 Not Found response to the user.
+// Convenience wrapper for clientError which sends a 404 Not Found response to the user.
 func (app *application) notFound(w http.ResponseWriter) {
 	app.clientError(w, http.StatusNotFound)
 }
@@ -47,20 +45,16 @@ func (app *application) render(w http.ResponseWriter, status int, page string, d
 	// Initialize a new buffer.
 	buf := new(bytes.Buffer)
 
-	// Write the template to the buffer, instead of straight to the
-	// http.ResponseWriter. If there's an error, call our serverError() helper
-	// and then return.
+	// Write the template to the buffer, instead of straight to the http.ResponseWriter. If there's an error, call
+	// serverError() helper and return.
 	err := ts.ExecuteTemplate(buf, "base", data)
 	if err != nil {
 		app.serverError(w, err)
 		return
 	}
 
-	// If the template is written to the buffer without any errors, we are safe
-	// to go ahead and write the HTTP status code to http.ResponseWriter.
+	// If the template is written to buffer without any errors, it's safe to write the HTTP status code to http.ResponseWriter.
 	w.WriteHeader(status)
-
-	// Write the contents of the buffer to the http.ResponseWriter
 	buf.WriteTo(w)
 }
 
@@ -79,20 +73,17 @@ func (app *application) decodePostForm(r *http.Request, dst any) error {
 		return err
 	}
 
-	// Call Decode() on our decoder instance, passing the target destination as
-	// the first parameter.
+	// Call Decode() on our decoder instance, passing the target destination as the first parameter.
 	err = app.formDecoder.Decode(dst, r.PostForm)
 	if err != nil {
-		// If we try to use an invalid target destination, the Decode() method
-		// will return an error with the type *form.InvalidDecoderError. We use
-		// errors.As() to check for this and raise a panic rather than returning
-		// the error.
+		// If an invalid target destination is tried, Decode() returns an error with the type *form.InvalidDecoderError.
+		// errors.As() checks for this and raise a panic rather than returning the error
 		var invalidDecoderError *form.InvalidDecoderError
 		if errors.As(err, &invalidDecoderError) {
 			panic(err)
 		}
 
-		// For all other errors, we return them as normal.
+		// Return all other errors
 		return err
 	}
 
