@@ -6,13 +6,11 @@
             <tr>
                 <th>Title</th>
                 <th>Created</th>
-                <th>ID</th>
             </tr>
             {{range .Snippets}}
                 <tr>
                     <td><a href='/snippet/view/{{.ID}}'>{{.Title}}</a></td>
                     <td>{{humanDate .Created}}</td>
-                    <td>#{{.ID}}</td>
                 </tr>
             {{end}}
         </table>

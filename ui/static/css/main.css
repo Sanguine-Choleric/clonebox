@@ -52,12 +52,12 @@ h2 {
 }
 
 a {
-    color: #62CB31;
+    color: #3188cb;
     text-decoration: none;
 }
 
 a:hover {
-    color: #4EB722;
+    color: #3188cb;
     text-decoration: underline;
 }
 
@@ -67,10 +67,10 @@ textarea, input:not([type="submit"]) {
 }
 
 header {
-    background-image: -webkit-linear-gradient(left, #34495e, #34495e 25%, #9b59b6 25%, #9b59b6 35%, #3498db 35%, #3498db 45%, #62cb31 45%, #62cb31 55%, #ffb606 55%, #ffb606 65%, #e67e22 65%, #e67e22 75%, #e74c3c 85%, #e74c3c 85%, #c0392b 85%, #c0392b 100%);
-    background-image: -moz-linear-gradient(left, #34495e, #34495e 25%, #9b59b6 25%, #9b59b6 35%, #3498db 35%, #3498db 45%, #62cb31 45%, #62cb31 55%, #ffb606 55%, #ffb606 65%, #e67e22 65%, #e67e22 75%, #e74c3c 85%, #e74c3c 85%, #c0392b 85%, #c0392b 100%);
-    background-image: -ms-linear-gradient(left, #34495e, #34495e 25%, #9b59b6 25%, #9b59b6 35%, #3498db 35%, #3498db 45%, #62cb31 45%, #62cb31 55%, #ffb606 55%, #ffb606 65%, #e67e22 65%, #e67e22 75%, #e74c3c 85%, #e74c3c 85%, #c0392b 85%, #c0392b 100%);
-    background-image: linear-gradient(to right, #34495e, #34495e 25%, #9b59b6 25%, #9b59b6 35%, #3498db 35%, #3498db 45%, #62cb31 45%, #62cb31 55%, #ffb606 55%, #ffb606 65%, #e67e22 65%, #e67e22 75%, #e74c3c 85%, #e74c3c 85%, #c0392b 85%, #c0392b 100%);
+    /*background-image: -webkit-linear-gradient(left, #34495e, #34495e 25%, #9b59b6 25%, #9b59b6 35%, #3498db 35%, #3498db 45%, #62cb31 45%, #62cb31 55%, #ffb606 55%, #ffb606 65%, #e67e22 65%, #e67e22 75%, #e74c3c 85%, #e74c3c 85%, #c0392b 85%, #c0392b 100%);*/
+    /*background-image: -moz-linear-gradient(left, #34495e, #34495e 25%, #9b59b6 25%, #9b59b6 35%, #3498db 35%, #3498db 45%, #62cb31 45%, #62cb31 55%, #ffb606 55%, #ffb606 65%, #e67e22 65%, #e67e22 75%, #e74c3c 85%, #e74c3c 85%, #c0392b 85%, #c0392b 100%);*/
+    /*background-image: -ms-linear-gradient(left, #34495e, #34495e 25%, #9b59b6 25%, #9b59b6 35%, #3498db 35%, #3498db 45%, #62cb31 45%, #62cb31 55%, #ffb606 55%, #ffb606 65%, #e67e22 65%, #e67e22 75%, #e74c3c 85%, #e74c3c 85%, #c0392b 85%, #c0392b 100%);*/
+    /*background-image: linear-gradient(to right, #34495e, #34495e 25%, #9b59b6 25%, #9b59b6 35%, #3498db 35%, #3498db 45%, #62cb31 45%, #62cb31 55%, #ffb606 55%, #ffb606 65%, #e67e22 65%, #e67e22 75%, #e74c3c 85%, #e74c3c 85%, #c0392b 85%, #c0392b 100%);*/
     background-size: 100% 6px;
     background-repeat: no-repeat;
     border-bottom: 1px solid #E4E5E7;
@@ -78,6 +78,7 @@ header {
     padding-top: 33px;
     padding-bottom: 27px;
     text-align: center;
+    font-weight: bold;
 }
 
 header a {
@@ -121,29 +122,30 @@ nav div:last-child a {
 nav a.live {
     color: #34495E;
     cursor: default;
+    text-decoration: underline;
 }
 
 nav a.live:hover {
-    text-decoration: none;
+    text-decoration: underline;
 }
 
 nav a.live:after {
-    content: '';
-    display: block;
-    position: relative;
-    left: calc(50% - 7px);
-    top: 9px;
-    width: 14px;
-    height: 14px;
-    background: #F7F9FA;
-    border-left: 1px solid #E4E5E7;
-    border-bottom: 1px solid #E4E5E7;
-    -moz-transform: rotate(45deg);
-    -webkit-transform: rotate(-45deg);
+    /*content: '';*/
+    /*display: block;*/
+    /*position: relative;*/
+    /*left: calc(50% - 7px);*/
+    /*top: 9px;*/
+    /*width: 14px;*/
+    /*height: 14px;*/
+    /*background: #F7F9FA;*/
+    /*!*border-left: 1px solid #E4E5E7;*!*/
+    /*!*border-bottom: 1px solid #E4E5E7;*!*/
+    /*!*-moz-transform: rotate(45deg);*!*/
+    /*!*-webkit-transform: rotate(-45deg);*!*/
 }
 
 a.button, input[type="submit"] {
-    background-color: #62CB31;
+    background-color: #3188cb;
     border-radius: 3px;
     color: #FFFFFF;
     padding: 18px 27px;
@@ -154,7 +156,7 @@ a.button, input[type="submit"] {
 }
 
 a.button:hover, input[type="submit"]:hover {
-    background-color: #4EB722;
+    background-color: #3188cb;
     color: #FFFFFF;
     cursor: pointer;
     text-decoration: none;
@@ -210,12 +212,12 @@ button {
     background: none;
     padding: 0;
     border: none;
-    color: #62CB31;
+    color: #3188cb;
     text-decoration: none;
 }
 
 button:hover {
-    color: #4EB722;
+    color: #3188cb;
     text-decoration: underline;
     cursor: pointer;
 }
