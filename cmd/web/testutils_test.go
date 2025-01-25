@@ -46,6 +46,7 @@ func newTestApplication(t *testing.T) *application {
 		sessionManager: sessionManager,
 		snippets:       &mocks.SnippetModel{},
 		users:          &mocks.UserModel{},
+		links:          &mocks.LinkMappingModel{},
 	}
 }
 

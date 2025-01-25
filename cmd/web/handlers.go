@@ -1,14 +1,16 @@
 package main
 
 import (
+	"crypto/sha256"
+	"database/sql"
 	"errors"
 	"fmt"
+	"github.com/julienschmidt/httprouter"
 	"net/http"
 	"snippetbox/internal/models"
 	"snippetbox/internal/validator"
 	"strconv"
-
-	"github.com/julienschmidt/httprouter"
+	"strings"
 )
 
 type snippetCreateForm struct {
@@ -35,6 +37,12 @@ type accountPasswordUpdateForm struct {
 	CurrentPassword     string `form:"current_password"`
 	NewPassword         string `form:"new_password"`
 	NewPasswordConfirm  string `form:"new_password_confirm"`
+	validator.Validator `form:"-"`
+}
+
+type linkShortenForm struct {
+	OriginalLink        string `form:"original_link"`
+	ShortLink           string `form:"short_link"`
 	validator.Validator `form:"-"`
 }
 
@@ -227,7 +235,7 @@ func (app *application) userLoginPost(w http.ResponseWriter, r *http.Request) {
 		http.Redirect(w, r, path, http.StatusSeeOther)
 		return
 	}
-	http.Redirect(w, r, "/snippet/create", http.StatusSeeOther)
+	http.Redirect(w, r, "/about", http.StatusSeeOther)
 }
 
 func (app *application) userLogoutPost(w http.ResponseWriter, r *http.Request) {
@@ -304,6 +312,101 @@ func (app *application) accountPasswordUpdatePost(w http.ResponseWriter, r *http
 	app.sessionManager.Put(r.Context(), "flash", "Password successfully changed")
 	http.Redirect(w, r, "/account/view", http.StatusSeeOther)
 
+}
+
+func (app *application) linkShorten(w http.ResponseWriter, r *http.Request) {
+	data := app.newTemplateData(r)
+	data.Form = linkShortenForm{}
+
+	app.render(w, http.StatusOK, "link_shorten.tmpl.html", data)
+}
+
+func (app *application) linkShortenPost(w http.ResponseWriter, r *http.Request) {
+	var form linkShortenForm
+	err := app.decodePostForm(r, &form)
+	if err != nil {
+		app.serverError(w, err)
+		return
+	}
+
+	// Valid URL checks
+	originalLink := form.OriginalLink
+	if !strings.HasPrefix(originalLink, "http://") && !strings.HasPrefix(originalLink, "https://") {
+		originalLink = "https://" + originalLink
+	}
+	form.CheckField(validator.IsURL(originalLink), "originalLink", "This field must be a valid URL")
+	if !form.Valid() {
+		data := app.newTemplateData(r)
+		data.Form = form
+		app.render(w, http.StatusUnprocessableEntity, "link_shorten.tmpl.html", data)
+		return
+	}
+
+	// Check if user entered link is already in db. If so, directly render that
+	exists, err := app.links.Exists(originalLink)
+	if err != nil {
+		if !errors.Is(err, sql.ErrNoRows) {
+			app.serverError(w, err)
+			return
+		}
+		app.errorLog.Printf("%v", err)
+	}
+
+	if exists {
+		short, err := app.links.GetShort(originalLink)
+		if err != nil {
+			app.serverError(w, err)
+		}
+
+		data := app.newTemplateData(r)
+		form.ShortLink = fmt.Sprintf("%s/shorten/%s", r.Host, short)
+		data.Form = form
+		app.render(w, http.StatusOK, "link_shorten.tmpl.html", data)
+		return
+	}
+
+	// Begin shortening logic
+	hash := sha256.Sum256([]byte(originalLink))
+	shortLink := fmt.Sprintf("%x", hash[0:3]) // Does this result in collisions?
+
+	// TODO Definitely unit test this
+	// If originalLink is a duplicate, earlier code would have caught it (and served existing)
+	// If shortLink is a duplicate, re-hash until no hash collision
+	err = app.links.Insert(originalLink, shortLink)
+	for errors.Is(err, models.ErrDuplicateLink) {
+		betterHash := sha256.Sum256([]byte(shortLink + originalLink))
+		shortLink = fmt.Sprintf("%x", betterHash[0:3])
+
+		err = app.links.Insert(originalLink, shortLink)
+	}
+
+	if err != nil {
+		app.serverError(w, err)
+		return
+	}
+
+	data := app.newTemplateData(r)
+	form.OriginalLink = originalLink
+	form.ShortLink = fmt.Sprintf("%s/shorten/%s", r.Host, shortLink)
+	data.Form = form
+	app.render(w, http.StatusOK, "link_shorten.tmpl.html", data)
+}
+
+func (app *application) linkRedirect(w http.ResponseWriter, r *http.Request) {
+	params := httprouter.ParamsFromContext(r.Context())
+	hash := params.ByName("hash")
+
+	originalLink, err := app.links.GetOriginal(hash)
+	if err != nil {
+		if errors.Is(err, models.ErrNoRecord) {
+			app.clientError(w, http.StatusNotFound)
+			return
+		}
+		app.serverError(w, err)
+		return
+	}
+
+	http.Redirect(w, r, originalLink, http.StatusSeeOther)
 }
 
 func ping(w http.ResponseWriter, r *http.Request) {

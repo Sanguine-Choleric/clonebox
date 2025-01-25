@@ -221,3 +221,56 @@ func TestSnippetCreate(t *testing.T) {
 
 	})
 }
+
+func TestLinkShorten(t *testing.T) {
+	app := newTestApplication(t)
+	ts := newTestServer(t, app.routes())
+	defer ts.Close()
+
+	t.Run("Unauthorized Link Shorten", func(t *testing.T) {
+		code, header, _ := ts.get(t, "/shorten")
+		assert.Equal(t, code, http.StatusSeeOther)
+		assert.Equal(t, header.Get("Location"), "/user/login")
+	})
+
+	t.Run("Authorized Link Shorten", func(t *testing.T) {
+		// Logging in user
+		_, _, body := ts.get(t, "/user/signup")
+		validCSRFToken := extractCSRFToken(t, body)
+		form := url.Values{}
+		form.Add("email", "alice@example.com")
+		form.Add("password", "p@ssw0rd")
+		form.Add("csrf_token", validCSRFToken)
+		code, _, _ := ts.postForm(t, "/user/login", form)
+		assert.Equal(t, code, http.StatusSeeOther)
+
+		code, _, body = ts.get(t, "/shorten")
+		assert.Equal(t, code, http.StatusOK)
+		assert.StringContains(t, body, "<form action='/shorten' method='POST'")
+
+		form2 := url.Values{}
+		form2.Add("original_link", "https://existent.com")
+		form2.Add("csrf_token", validCSRFToken)
+
+		code, _, _ = ts.postForm(t, "/shorten", form2)
+		assert.Equal(t, code, http.StatusOK)
+	})
+
+	t.Run("Bad Form", func(t *testing.T) {
+		_, _, body := ts.get(t, "/user/signup")
+		validCSRFToken := extractCSRFToken(t, body)
+		form := url.Values{}
+		form.Add("email", "alice@example.com")
+		form.Add("password", "p@ssw0rd")
+		form.Add("csrf_token", validCSRFToken)
+		_, _, _ = ts.postForm(t, "/user/login", form)
+
+		form = url.Values{}
+		form.Add("original_link", "?nval?durl")
+		form.Add("csrf_token", validCSRFToken)
+
+		code, _, body := ts.postForm(t, "/shorten", form)
+		assert.Equal(t, code, http.StatusUnprocessableEntity)
+
+	})
+}

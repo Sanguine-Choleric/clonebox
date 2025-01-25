@@ -1,0 +1,20 @@
+{{define "title"}}About{{end}}
+{{define "main"}}
+    <form action='/shorten' method='POST' novalidate>
+        <input type='hidden' name='csrf_token' value='{{.CSRFToken}}'>
+        <div>
+            <label>Original:</label>
+                        {{with .Form.FieldErrors.originalLink}}
+                            <label class='error'>{{.}}</label>
+                        {{end}}
+            <input type='text' name='original_link' value='{{.Form.OriginalLink}}'>
+        </div>
+        <div>
+            <label>Shortened:</label>
+            <input type="text" name="short_link" value="{{.Form.ShortLink}}" readonly disabled>
+        </div>
+        <div>
+            <input type='submit' value='Shorten'>
+        </div>
+    </form>
+{{end}}

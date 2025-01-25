@@ -22,3 +22,14 @@ VALUES ('Alice Jones',
         'alice@example.com',
         '$2a$12$RB1A2rdzmXNzt5uPOU9hWOgojGbYCWlV3jJj6474KhdRM947r/gwC',
         '2022-01-01 10:00:00');
+
+CREATE TABLE link_mapping
+(
+    id            INTEGER      NOT NULL PRIMARY KEY AUTO_INCREMENT,
+    original_link VARCHAR(100) NOT NULL UNIQUE,
+    short_link    VARCHAR(100) NOT NULL UNIQUE
+);
+
+INSERT INTO link_mapping (original_link, short_link)
+VALUES ('https://existent.com',
+        '123456');
