@@ -32,6 +32,7 @@ h1 a {
     font-size: 36px;
     font-weight: bold;
     background-image: url("/static/img/logo.png");
+    background-size: contain;
     background-repeat: no-repeat;
     background-position: 0px 0px;
     height: 36px;
@@ -52,12 +53,14 @@ h2 {
 }
 
 a {
-    color: #3188cb;
+    /*color: #3188cb;*/
+    color: #1f5b7c;
     text-decoration: none;
 }
 
 a:hover {
-    color: #3188cb;
+    /*color: #3188cb;*/
+    color: #1f5b7c;
     text-decoration: underline;
 }
 
@@ -93,6 +96,10 @@ nav {
     background: #F7F9FA;
     height: 60px;
     color: #6A6C6F;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    width: 100%
 }
 
 nav a {
@@ -106,8 +113,10 @@ nav form {
 }
 
 nav div {
-    width: 50%;
-    float: left;
+    /*width: 50%;*/
+    /*float: left;*/
+    display: flex;
+    align-items: center;
 }
 
 nav div:last-child {
@@ -145,7 +154,8 @@ nav a.live:after {
 }
 
 a.button, input[type="submit"] {
-    background-color: #3188cb;
+    /*background-color: #3188cb;*/
+    background-color: #1f5b7c;
     border-radius: 3px;
     color: #FFFFFF;
     padding: 18px 27px;
@@ -156,7 +166,8 @@ a.button, input[type="submit"] {
 }
 
 a.button:hover, input[type="submit"]:hover {
-    background-color: #3188cb;
+    /*background-color: #3188cb;*/
+    background-color: #1f5b7c;
     color: #FFFFFF;
     cursor: pointer;
     text-decoration: none;
@@ -212,12 +223,14 @@ button {
     background: none;
     padding: 0;
     border: none;
-    color: #3188cb;
+    /*color: #3188cb;*/
+    color: #1f5b7c;
     text-decoration: none;
 }
 
 button:hover {
-    color: #3188cb;
+    /*color: #3188cb;*/
+    color: #1f5b7c;
     text-decoration: underline;
     cursor: pointer;
 }
