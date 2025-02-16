@@ -17,4 +17,22 @@
     {{else}}
         <p>There's nothing to see here... yet!</p>
     {{end}}
+
+    <h2>Latest Links</h2>
+    {{if .Links}}
+        <table>
+        <tr>
+            <th>Original</th>
+            <th>Shortened</th>
+        </tr>
+        {{range .Links}}
+            <tr>
+                <td>{{.OriginalLink}}</td>
+                <td><a href='/shorten/{{.ShortLink}}'>{{.ShortLink}}</a></td>
+            </tr>
+        {{end}}
+        </table>
+    {{else}}
+        <p>No links either...</p>
+    {{end}}
 {{end}}

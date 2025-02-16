@@ -63,11 +63,11 @@ func (m *UserModel) Insert(name, email, password string) error {
 // Authenticate verifies whether a user exists with provided email address and password. This will return the relevant
 // user ID if they do.
 func (m *UserModel) Authenticate(email, password string) (int, error) {
-	// Retrieve the id and hashed password associated with the given email. If no matching email exists, returns ErrInvalidCredentials
+	// Retrieve the ID and hashed password associated with the given email. If no matching email exists, returns ErrInvalidCredentials
 	var id int
 	var hashedPassword []byte
 
-	stmt := `SELECT id, hashed_password FROM users WHERE email = ?`
+	stmt := `SELECT ID, hashed_password FROM users WHERE email = ?`
 
 	err := m.DB.QueryRow(stmt, email).Scan(&id, &hashedPassword)
 	if err != nil {
@@ -95,7 +95,7 @@ func (m *UserModel) Authenticate(email, password string) (int, error) {
 func (m *UserModel) Exists(id int) (bool, error) {
 	var exists bool
 
-	stmt := "SELECT EXISTS(SELECT true FROM users WHERE id = ?)"
+	stmt := "SELECT EXISTS(SELECT true FROM users WHERE ID = ?)"
 
 	err := m.DB.QueryRow(stmt, id).Scan(&exists)
 	return exists, err
@@ -104,7 +104,7 @@ func (m *UserModel) Exists(id int) (bool, error) {
 func (m *UserModel) Get(id int) (*User, error) {
 	var user User
 
-	stmt := `SELECT id, name, email, created FROM users WHERE id = ?`
+	stmt := `SELECT ID, name, email, created FROM users WHERE ID = ?`
 	err := m.DB.QueryRow(stmt, id).Scan(&user.ID, &user.Name, &user.Email, &user.Created)
 	//if errors.Is(err, sql.ErrNoRows) {
 	//	return nil, ErrNoRecord
@@ -124,9 +124,9 @@ func (m *UserModel) Get(id int) (*User, error) {
 }
 
 func (m *UserModel) PasswordUpdate(id int, currentPassword string, newPassword string) error {
-	// Retrieve user from id
+	// Retrieve user from ID
 	var user User
-	stmt := `SELECT * FROM users WHERE id = ?`
+	stmt := `SELECT * FROM users WHERE ID = ?`
 	err := m.DB.QueryRow(stmt, id).Scan(&user.ID, &user.Name, &user.Email, &user.HashedPassword, &user.Created)
 	//if errors.Is(err, sql.ErrNoRows) {
 	//	return ErrNoRecord
@@ -157,7 +157,7 @@ func (m *UserModel) PasswordUpdate(id int, currentPassword string, newPassword s
 		return err
 	}
 
-	stmt = `UPDATE users SET hashed_password = ? WHERE id = ?`
+	stmt = `UPDATE users SET hashed_password = ? WHERE ID = ?`
 	_, err = m.DB.Exec(stmt, string(hashedNewPassword), id)
 	if err != nil {
 		return err

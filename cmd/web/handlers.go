@@ -53,8 +53,15 @@ func (app *application) home(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
+	links, err := app.links.Latest()
+	if err != nil {
+		app.serverError(w, err)
+		return
+	}
+
 	data := app.newTemplateData(r)
 	data.Snippets = snippets
+	data.Links = links
 
 	app.render(w, http.StatusOK, "home.tmpl.html", data)
 }

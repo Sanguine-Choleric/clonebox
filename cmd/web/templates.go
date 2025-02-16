@@ -14,6 +14,8 @@ type templateData struct {
 	CurrentYear     int
 	Snippet         *models.Snippet
 	Snippets        []*models.Snippet
+	Link            *models.LinkMapping
+	Links           []*models.LinkMapping
 	Form            any
 	Flash           string
 	IsAuthenticated bool

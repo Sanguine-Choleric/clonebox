@@ -11,6 +11,11 @@ func (m *LinkMappingModel) Insert(original, short string) error {
 	panic("implement me")
 }
 
+func (m *LinkMappingModel) Latest() ([]*models.LinkMapping, error) {
+	//TODO implement me
+	panic("implement me")
+}
+
 func (m *LinkMappingModel) GetOriginal(short string) (string, error) {
 	switch short {
 	case "abcde":

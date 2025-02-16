@@ -297,6 +297,7 @@ table {
     border: 1px solid #E4E5E7;
     border-collapse: collapse;
     width: 100%;
+    margin-bottom: 54px;
 }
 
 td, th {
@@ -315,6 +316,10 @@ tr {
 
 tr:nth-child(2n) {
     background-color: #F7F9FA;
+}
+
+p {
+    margin-bottom: 54px;
 }
 
 footer {

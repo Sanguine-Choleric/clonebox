@@ -12,10 +12,41 @@ type LinkMappingModelInterface interface {
 	GetOriginal(short string) (string, error)
 	GetShort(original string) (string, error)
 	Exists(original string) (bool, error)
+	Latest() ([]*LinkMapping, error)
 }
 
 type LinkMappingModel struct {
 	DB *sql.DB
+}
+
+func (m *LinkMappingModel) Latest() ([]*LinkMapping, error) {
+	stmt := `SELECT original_link, short_link FROM link_mapping
+				ORDER BY ID DESC LIMIT 5`
+
+	rows, err := m.DB.Query(stmt)
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+
+	links := []*LinkMapping{}
+
+	for rows.Next() {
+		l := &LinkMapping{}
+
+		err = rows.Scan(&l.OriginalLink, &l.ShortLink)
+		if err != nil {
+			return nil, err
+		}
+
+		links = append(links, l)
+	}
+
+	if err := rows.Err(); err != nil {
+		return nil, err
+	}
+
+	return links, nil
 }
 
 func (m *LinkMappingModel) Exists(original string) (bool, error) {
@@ -56,9 +87,9 @@ func (m *LinkMappingModel) GetShort(link string) (string, error) {
 
 type LinkMapping struct {
 	// Add validation for links later
-	id           int
-	originalLink string
-	shortLink    string
+	ID           int
+	OriginalLink string
+	ShortLink    string
 }
 
 func (m *LinkMappingModel) Insert(original, short string) error {
