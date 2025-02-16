@@ -4,6 +4,7 @@ import (
 	"crypto/tls"
 	"database/sql"
 	"flag"
+	"fmt"
 	"html/template"
 	"log"
 	"net/http"
@@ -32,14 +33,27 @@ type application struct {
 }
 
 func main() {
+	infoLog := log.New(os.Stdout, "INFO\t", log.Ldate|log.Ltime)
+	errorLog := log.New(os.Stderr, "ERROR\t", log.Ldate|log.Ltime|log.Lshortfile)
+
 	addr := flag.String("addr", ":4000", "HTTP network address")
-	dsn := flag.String("dsn", "web:pass@/snippetbox?parseTime=true", "MySQL data source name")
+	
+	DB_PASS, err := os.ReadFile("/run/secrets/db_password")
+	if err != nil {
+		errorLog.Printf("%s", err)
+	}
+
+	default_dsn := fmt.Sprintf("%s:%s@tcp(%s:3306)/%s?parseTime=true",
+		os.Getenv("DB_USER"),
+		DB_PASS,
+		os.Getenv("DB_HOST"),
+		os.Getenv("DB_NAME"),
+	)
+
+	dsn := flag.String("dsn", default_dsn, "MySQL data source name")
 	debug := flag.Bool("debug", false, "Enables debug mode (stack traces)")
 
 	flag.Parse()
-
-	infoLog := log.New(os.Stdout, "INFO\t", log.Ldate|log.Ltime)
-	errorLog := log.New(os.Stderr, "ERROR\t", log.Ldate|log.Ltime|log.Lshortfile)
 
 	db, err := openDB(*dsn)
 	if err != nil {
