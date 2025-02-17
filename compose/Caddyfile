@@ -22,7 +22,7 @@
 #	# php_fastcgi localhost:9000
 #}
 
-137.184.126.55 {
+http://137.184.126.55 {
 	respond /user/signup "Not Permitted" 403
 	reverse_proxy web:4000
 }
@@ -31,7 +31,7 @@ localhost {
 	reverse_proxy web:4000
 }
 
-127.0.0.1 {
+http://127.0.0.1 {
 	reverse_proxy web:4000
 }
 
