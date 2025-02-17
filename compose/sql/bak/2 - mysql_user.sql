@@ -1,3 +1,3 @@
-CREATE USER 'web'@'localhost';
+CREATE USER 'web'@'%';
 GRANT SELECT, INSERT, UPDATE, DELETE ON snippetbox.* TO 'web'@'%';
-ALTER USER 'web'@'localhost' IDENTIFIED BY 'pass';
+ALTER USER 'web'@'%' IDENTIFIED BY 'pass';

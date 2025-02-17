@@ -9,6 +9,7 @@ import (
 	"log"
 	"net/http"
 	"os"
+	"strings"
 	"time"
 
 	"github.com/alexedwards/scs/mysqlstore"
@@ -38,17 +39,21 @@ func main() {
 
 	addr := flag.String("addr", ":4000", "HTTP network address")
 	
-	DB_PASS, err := os.ReadFile("/run/secrets/db_password")
+	raw_password, err := os.ReadFile("/run/secrets/db_password")
 	if err != nil {
 		errorLog.Printf("%s", err)
 	}
 
-	default_dsn := fmt.Sprintf("%s:%s@tcp(%s:3306)/%s?parseTime=true",
+	DB_PASS := strings.TrimSpace(string(raw_password))
+
+	default_dsn := fmt.Sprintf("%s:%s@tcp(%s)/%s?parseTime=true",
 		os.Getenv("DB_USER"),
 		DB_PASS,
 		os.Getenv("DB_HOST"),
 		os.Getenv("DB_NAME"),
 	)
+
+	// infoLog.Printf("%s", default_dsn)
 
 	dsn := flag.String("dsn", default_dsn, "MySQL data source name")
 	debug := flag.Bool("debug", false, "Enables debug mode (stack traces)")
