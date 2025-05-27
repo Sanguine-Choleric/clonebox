@@ -11,6 +11,45 @@ services:
       DB_PASS: /run/secrets/db_password
     secrets:
       - db_password
+    ports:
+      - "4000:4000"
+      - "2345:2345"
+    security_opt:
+      - "seccomp:unconfined"
+    cap_add:
+      - SYS_PTRACE
+    command: /dlv --headless --listen=:2345 --api-version=2 exec /app/web
+
+#  web:
+#    build: .
+#    depends_on:
+#      db:
+#        condition: service_healthy
+#    environment:
+#      DB_HOST: db
+#      DB_NAME: snippetbox
+#      DB_USER: web
+#      DB_PASS: /run/secrets/db_password
+#    secrets:
+#      - db_password
+#    ports:
+#      - "4000:4000"
+
+#  web:
+#    image: ghcr.io/sanguine-choleric/clonebox-web:latest
+#    restart: unless-stopped
+#    depends_on:
+#      db:
+#        condition: service_healthy
+#    environment:
+#      DB_HOST: db
+#      DB_NAME: snippetbox
+#      DB_USER: web
+#      DB_PASS: /run/secrets/db_password
+#    secrets:
+#      - db_password
+#    ports:
+#      - "4000:4000"
 
   db:
     image: mariadb:10
@@ -19,9 +58,10 @@ services:
       MARIADB_USER: web
       MARIADB_PASSWORD_FILE: /run/secrets/db_password
       MARIADB_DATABASE: snippetbox
+      MARIADB_LOG_WARNINGS: 0
     healthcheck:
-      test: ["CMD-SHELL", "mariadb-admin ping -h 127.0.0.1 --silent"]
-      interval: 1m
+      test: ["CMD-SHELL", "mariadb-admin ping --silent"]
+      interval: 5s
       retries: 5
       start_period: 30s
     volumes:
@@ -30,8 +70,8 @@ services:
     secrets:
       - db_password
       - db_root_password
-    # ports:
-    #   - "3306:3306"
+    ports:
+      - "3306:3306"
 
   proxy:
     image: caddy:2.9
