@@ -13,6 +13,7 @@ import (
 	"net/url"
 	"regexp"
 	"snippetbox/internal/models/mocks"
+	"strings"
 	"testing"
 	"time"
 )
@@ -93,24 +94,46 @@ func (ts *testServer) get(t *testing.T, urlPath string) (int, http.Header, strin
 	return rs.StatusCode, rs.Header, string(body)
 }
 
-// Makes a POST request to a given url with a provided form. Returns response status code, headers and body
+//// Makes a POST request to a given url with a provided form. Returns response status code, headers and body
+//func (ts *testServer) postForm(t *testing.T, urlPath string, form url.Values) (int, http.Header, string) {
+//	rs, err := ts.Client().PostForm(ts.URL+urlPath, form)
+//	if err != nil {
+//		t.Fatal(err)
+//	}
+//
+//	// Read the response body from the test server.
+//	defer rs.Body.Close()
+//	body, err := io.ReadAll(rs.Body)
+//	if err != nil {
+//		t.Fatal(err)
+//	}
+//	bytes.TrimSpace(body)
+//
+//	// Return the response status, headers and body.
+//	return rs.StatusCode, rs.Header, string(body)
+//}
+
 func (ts *testServer) postForm(t *testing.T, urlPath string, form url.Values) (int, http.Header, string) {
-	rs, err := ts.Client().PostForm(ts.URL+urlPath, form)
+	req, err := http.NewRequest("POST", ts.URL+urlPath, strings.NewReader(form.Encode()))
 	if err != nil {
 		t.Fatal(err)
 	}
-	t.Logf("POST request URL: %v + %v", rs.Request.URL.Host, rs.Request.URL.Path)
-	t.Logf("POST Cookie sent: %v", ts.Client().Jar.Cookies(rs.Request.URL))
+	// Need to manually add headers for some reason?
+	req.Header.Set("Content-Type", "application/x-www-form-urlencoded")
+	req.Header.Set("Referer", ts.URL+urlPath)
 
-	// Read the response body from the test server.
+	rs, err := ts.Client().Do(req)
+	if err != nil {
+		t.Fatal(err)
+	}
 	defer rs.Body.Close()
+
 	body, err := io.ReadAll(rs.Body)
 	if err != nil {
 		t.Fatal(err)
 	}
 	bytes.TrimSpace(body)
 
-	// Return the response status, headers and body.
 	return rs.StatusCode, rs.Header, string(body)
 }
 

@@ -4,6 +4,7 @@ import (
 	"context"
 	"fmt"
 	"github.com/justinas/nosurf"
+	"log"
 	"net/http"
 )
 
@@ -75,6 +76,16 @@ func noSurf(next http.Handler) http.Handler {
 		Secure:   true,
 		HttpOnly: true,
 	})
+
+	csrfHandler.SetFailureHandler(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		log.Printf("CSRF validation failed for path: %s, reason: %v", r.URL.Path, nosurf.Reason(r))
+		http.Error(w, "CSRF validation failed", http.StatusBadRequest)
+		log.Println("Cookies on failed request:")
+		for _, cookie := range r.Cookies() {
+			log.Printf("  Name: %s, Value: %s, Path: %s, Secure: %t, HttpOnly: %t",
+				cookie.Name, cookie.Value, cookie.Path, cookie.Secure, cookie.HttpOnly)
+		}
+	}))
 
 	return csrfHandler
 }
