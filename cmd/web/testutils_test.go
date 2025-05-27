@@ -37,7 +37,7 @@ func newTestApplication(t *testing.T) *application {
 	sessionManager := scs.New()
 	sessionManager.Lifetime = 12 * time.Hour
 	sessionManager.Cookie.Secure = true
-
+	//sessionManager.Cookie.Secure = false
 	return &application{
 		errorLog:       log.New(io.Discard, "", 0),
 		infoLog:        log.New(io.Discard, "", 0),
@@ -54,6 +54,7 @@ func newTestApplication(t *testing.T) *application {
 func newTestServer(t *testing.T, h http.Handler) *testServer {
 	// Initialize the test server as normal.
 	ts := httptest.NewTLSServer(h)
+	//ts := httptest.NewServer(h)
 
 	// Initialize a new cookie jar.
 	jar, err := cookiejar.New(nil)
@@ -98,6 +99,8 @@ func (ts *testServer) postForm(t *testing.T, urlPath string, form url.Values) (i
 	if err != nil {
 		t.Fatal(err)
 	}
+	t.Logf("POST request URL: %v + %v", rs.Request.URL.Host, rs.Request.URL.Path)
+	t.Logf("POST Cookie sent: %v", ts.Client().Jar.Cookies(rs.Request.URL))
 
 	// Read the response body from the test server.
 	defer rs.Body.Close()

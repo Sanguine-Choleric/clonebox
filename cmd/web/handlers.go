@@ -9,7 +9,6 @@ import (
 	"net/http"
 	"snippetbox/internal/models"
 	"snippetbox/internal/validator"
-	"strconv"
 	"strings"
 )
 
@@ -74,13 +73,10 @@ func (app *application) about(w http.ResponseWriter, r *http.Request) {
 func (app *application) snippetView(w http.ResponseWriter, r *http.Request) {
 	params := httprouter.ParamsFromContext(r.Context())
 
-	id, err := strconv.Atoi(params.ByName("id"))
-	if err != nil || id < 1 {
-		app.notFound(w)
-		return
-	}
+	public_id := params.ByName("public_id")
 
-	snippet, err := app.snippets.Get(id)
+	snippet, err := app.snippets.Get(public_id)
+	app.infoLog.Print(snippet)
 	if err != nil {
 		if errors.Is(err, models.ErrNoRecord) {
 			app.notFound(w)
@@ -125,7 +121,7 @@ func (app *application) snippetCreatePost(w http.ResponseWriter, r *http.Request
 		return
 	}
 
-	id, err := app.snippets.Insert(form.Title, form.Content, form.Expires)
+	public_id, err := app.snippets.Insert(form.Title, form.Content, form.Expires)
 	if err != nil {
 		app.serverError(w, err)
 		return
@@ -133,7 +129,7 @@ func (app *application) snippetCreatePost(w http.ResponseWriter, r *http.Request
 
 	app.sessionManager.Put(r.Context(), "flash", "Snippet successfully saved")
 
-	http.Redirect(w, r, fmt.Sprintf("/snippet/view/%d", id), http.StatusSeeOther)
+	http.Redirect(w, r, fmt.Sprintf("/snippet/view/%s", public_id), http.StatusSeeOther)
 }
 
 func (app *application) userSignup(w http.ResponseWriter, r *http.Request) {

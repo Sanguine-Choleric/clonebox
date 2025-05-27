@@ -6,22 +6,23 @@ import (
 )
 
 var mockSnippet = &models.Snippet{
-	ID:      1,
-	Title:   "Test title",
-	Content: "Test content",
-	Created: time.Now(),
-	Expires: time.Now(),
+	ID:       1,
+	PublicID: "A",
+	Title:    "Test title",
+	Content:  "Test content",
+	Created:  time.Now(),
+	Expires:  time.Now(),
 }
 
 type SnippetModel struct{}
 
-func (m *SnippetModel) Insert(title, content string, expires int) (int, error) {
-	return 2, nil
+func (m *SnippetModel) Insert(title, content string, expires int) (string, error) {
+	return "B", nil
 }
 
-func (m *SnippetModel) Get(id int) (*models.Snippet, error) {
-	switch id {
-	case 1:
+func (m *SnippetModel) Get(public_id string) (*models.Snippet, error) {
+	switch public_id {
+	case "A":
 		return mockSnippet, nil
 	default:
 		return nil, models.ErrNoRecord
