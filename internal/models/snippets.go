@@ -34,13 +34,23 @@ func (m *SnippetModel) Insert(title string, content string, expires int) (string
 
 	// Quick random id generation
 	const letters = "qwertyuiopasdfghjklzxcvbnmQWERTYUIOPASDFGHJKLZXCVBNM1234567890"
-	random := make([]byte, 5)
-	for i := range random {
-		random[i] = letters[rand.Intn(len(letters))]
-	}
-	public_id := string(random)
-	if len(random) != 5 {
-		return "", errors.New("bad public id generation")
+	var public_id string
+	random := make([]byte, 4)
+	for {
+		for i := range random {
+			random[i] = letters[rand.Intn(len(letters))]
+		}
+		public_id = string(random) + time.Now().String()[:1]
+
+		// Duplicate check
+		dupeCheckStmt := `SELECT public_id FROM snippets WHERE public_id = ?`
+		res := m.DB.QueryRow(dupeCheckStmt, public_id)
+		err := res.Scan()
+		if errors.Is(err, sql.ErrNoRows) {
+			break
+		} else if err != nil {
+			return "", err
+		}
 	}
 
 	result, err := m.DB.Exec(stmt, public_id, title, content, expires)
