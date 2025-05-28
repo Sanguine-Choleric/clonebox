@@ -1,25 +1,4 @@
 services:
-  web:
-    build: .
-    depends_on:
-      db:
-        condition: service_healthy
-    environment:
-      DB_HOST: db
-      DB_NAME: snippetbox
-      DB_USER: web
-      DB_PASS: /run/secrets/db_password
-    secrets:
-      - db_password
-    ports:
-      - "4000:4000"
-      - "2345:2345"
-    security_opt:
-      - "seccomp:unconfined"
-    cap_add:
-      - SYS_PTRACE
-    command: /dlv --headless --listen=:2345 --api-version=2 exec /app/web
-
 #  web:
 #    build: .
 #    depends_on:
@@ -34,6 +13,29 @@ services:
 #      - db_password
 #    ports:
 #      - "4000:4000"
+#      - "2345:2345"
+#    security_opt:
+#      - "seccomp:unconfined"
+#    cap_add:
+#      - SYS_PTRACE
+#    command: /dlv --headless --listen=:2345 --api-version=2 exec /app/web
+
+  web:
+    build:
+      context: .
+      dockerfile: dockerfile
+    depends_on:
+      db:
+        condition: service_healthy
+    environment:
+      DB_HOST: db
+      DB_NAME: snippetbox
+      DB_USER: web
+      DB_PASS: /run/secrets/db_password
+    secrets:
+      - db_password
+    ports:
+      - "4000:4000"
 
 #  web:
 #    image: ghcr.io/sanguine-choleric/clonebox-web:latest
