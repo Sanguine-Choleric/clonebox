@@ -16,6 +16,7 @@ type templateData struct {
 	Snippets        []*models.Snippet
 	Link            *models.LinkMapping
 	Links           []*models.LinkMapping
+	File            *models.File
 	Form            any
 	Flash           string
 	IsAuthenticated bool

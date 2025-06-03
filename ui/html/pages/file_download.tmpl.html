@@ -1,0 +1,24 @@
+{{define "title"}}{{.File.FileName}}{{end}}
+{{define "main"}}
+    {{with.File}}
+        <table class="file">
+            <tr>
+                <th>File:</th>
+                <td><a href="/file/download/{{.FileUUID}}"
+                       download="{{.FileName}}">{{.FileName}}</a></td>
+            </tr>
+            <tr>
+                <th>MD5:</th>
+                <td>{{.Checksum}}</td>
+            </tr>
+            <tr>
+                <th>Size:</th>
+                <td>{{.FileSize}} B</td>
+            </tr>
+            <tr>
+                <th>Uploaded:</th>
+                <td>{{humanDate .UploadTime}}</td>
+            </tr>
+        </table>
+    {{end}}
+{{end}}

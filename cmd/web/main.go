@@ -28,6 +28,7 @@ type application struct {
 	snippets       models.SnippetModelInterface
 	users          models.UserModelInterface
 	links          models.LinkMappingModelInterface
+	files          models.FilesModelInterface
 	templateCache  map[string]*template.Template
 	formDecoder    *form.Decoder
 	sessionManager *scs.SessionManager
@@ -38,7 +39,7 @@ func main() {
 	errorLog := log.New(os.Stderr, "ERROR\t", log.Ldate|log.Ltime|log.Lshortfile)
 
 	addr := flag.String("addr", ":4000", "HTTP network address")
-	
+
 	raw_password, err := os.ReadFile("/run/secrets/db_password")
 	if err != nil {
 		errorLog.Printf("%s", err)
@@ -85,6 +86,7 @@ func main() {
 		snippets:       &models.SnippetModel{DB: db},
 		users:          &models.UserModel{DB: db},
 		links:          &models.LinkMappingModel{DB: db},
+		files:          &models.FileModel{DB: db},
 		templateCache:  templateCache,
 		formDecoder:    formDecoder,
 		sessionManager: sessionManager,

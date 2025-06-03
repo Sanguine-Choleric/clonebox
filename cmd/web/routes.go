@@ -40,6 +40,8 @@ func (app *application) routes() http.Handler {
 	router.Handler(http.MethodGet, "/user/login", dynamic.ThenFunc(app.userLogin))
 	router.Handler(http.MethodPost, "/user/login", dynamic.ThenFunc(app.userLoginPost))
 	router.Handler(http.MethodGet, "/shorten/:hash", dynamic.ThenFunc(app.linkRedirect))
+	router.Handler(http.MethodGet, "/file/view/:uuid", dynamic.ThenFunc(app.fileView))
+	router.Handler(http.MethodGet, "/file/download/:uuid", dynamic.ThenFunc(app.fileDownload))
 
 	// Protected (authenticated-only) and dynamic application route handling
 	protected := dynamic.Append(app.requireAuthentication)
@@ -52,6 +54,8 @@ func (app *application) routes() http.Handler {
 	router.Handler(http.MethodPost, "/account/password/update", protected.ThenFunc(app.accountPasswordUpdatePost))
 	router.Handler(http.MethodGet, "/shorten", protected.ThenFunc(app.linkShorten))
 	router.Handler(http.MethodPost, "/shorten", protected.ThenFunc(app.linkShortenPost))
+	router.Handler(http.MethodGet, "/file", protected.ThenFunc(app.fileUpload))
+	router.Handler(http.MethodPost, "/file", protected.ThenFunc(app.fileUploadPost))
 
 	standard := alice.New(app.recoverPanic, app.logRequest, secureHeaders)
 	return standard.Then(router)

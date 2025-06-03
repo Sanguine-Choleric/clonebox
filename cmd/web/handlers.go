@@ -1,12 +1,16 @@
 package main
 
 import (
+	"crypto/md5"
 	"crypto/sha256"
 	"database/sql"
 	"errors"
 	"fmt"
+	"github.com/google/uuid"
 	"github.com/julienschmidt/httprouter"
+	"io"
 	"net/http"
+	"os"
 	"snippetbox/internal/models"
 	"snippetbox/internal/validator"
 	"strings"
@@ -45,6 +49,10 @@ type linkShortenForm struct {
 	validator.Validator `form:"-"`
 }
 
+type fileShareForm struct {
+	Filename string `form:"file_name"`
+}
+
 func (app *application) home(w http.ResponseWriter, r *http.Request) {
 	snippets, err := app.snippets.Latest()
 	if err != nil {
@@ -76,7 +84,7 @@ func (app *application) snippetView(w http.ResponseWriter, r *http.Request) {
 	public_id := params.ByName("public_id")
 
 	snippet, err := app.snippets.Get(public_id)
-	app.infoLog.Print(snippet)
+	app.infoLog.Print(snippet) //FIXME: CLEANUP
 	if err != nil {
 		if errors.Is(err, models.ErrNoRecord) {
 			app.notFound(w)
@@ -410,6 +418,121 @@ func (app *application) linkRedirect(w http.ResponseWriter, r *http.Request) {
 	}
 
 	http.Redirect(w, r, originalLink, http.StatusSeeOther)
+}
+
+func (app *application) fileUpload(w http.ResponseWriter, r *http.Request) {
+	data := app.newTemplateData(r)
+	data.Form = fileShareForm{}
+
+	app.render(w, http.StatusOK, "file_upload.tmpl.html", data)
+}
+
+func (app *application) fileUploadPost(w http.ResponseWriter, r *http.Request) {
+	err := r.ParseMultipartForm(100 << 20) // 100MB -> 2^20 is 1MB
+	if err != nil {
+		app.serverError(w, err)
+		return
+	}
+
+	uploadedFile, header, err := r.FormFile("file")
+	if err != nil {
+		app.serverError(w, err)
+		return
+	}
+	defer uploadedFile.Close()
+
+	// Unique file name - store in db?
+	fileUUID := uuid.New().String()
+	storagePath := "/clonebox/uploads/"
+	dst, err := os.Create(storagePath + fileUUID)
+	if err != nil {
+		app.serverError(w, err)
+		return
+	}
+	defer dst.Close()
+
+	// Need to use teeReader to avoid weird read-once limitation on multipart form file
+	// This handles saving to disk and checksum calc in same pass
+	h := md5.New()
+	teeReader := io.TeeReader(uploadedFile, h)
+	_, err = io.Copy(dst, teeReader)
+	if err != nil {
+		app.serverError(w, err)
+		return
+	}
+	checksum := fmt.Sprintf("%x", h.Sum(nil))
+
+	// Begin DB Storage
+	// Checking for existing file w/ matching checksum. If exists, delete previously copied. Using this approach because of
+	// io.Reader limitations -- TODO: Find a better way
+	existingFile, err := app.files.GetByChecksum(checksum)
+	if err != nil {
+		if errors.Is(err, models.ErrNoRecord) {
+			// Currently storing storagePath in case i use a per-user dir approach
+			err = app.files.Insert(header.Filename, fileUUID, int(header.Size), checksum, storagePath)
+			if err != nil {
+				app.serverError(w, err)
+				return
+			}
+
+			http.Redirect(w, r, fmt.Sprintf("/file/view/%s", fileUUID), http.StatusSeeOther)
+			return
+		}
+		app.serverError(w, err)
+		return
+	}
+
+	// Delete dupe upload
+	err = os.Remove(storagePath + fileUUID)
+	if err != nil {
+		app.serverError(w, err)
+		return
+	}
+
+	http.Redirect(w, r, fmt.Sprintf("/file/view/%s", existingFile.FileUUID), http.StatusSeeOther)
+}
+
+func (app *application) fileView(w http.ResponseWriter, r *http.Request) {
+	params := httprouter.ParamsFromContext(r.Context())
+	fileNameUUID := params.ByName("uuid")
+
+	uploadedFile, err := app.files.GetByUUID(fileNameUUID)
+	if err != nil {
+		if errors.Is(err, models.ErrNoRecord) {
+			app.clientError(w, http.StatusNotFound)
+			return
+		}
+		app.serverError(w, err)
+		return
+	}
+
+	data := app.newTemplateData(r)
+	data.File = uploadedFile
+
+	app.render(w, http.StatusOK, "file_download.tmpl.html", data)
+}
+
+func (app *application) fileDownload(w http.ResponseWriter, r *http.Request) {
+	params := httprouter.ParamsFromContext(r.Context())
+	fileNameUUID := params.ByName("uuid")
+
+	uploadedFile, err := app.files.GetByUUID(fileNameUUID)
+	if err != nil {
+		if errors.Is(err, models.ErrNoRecord) {
+			app.clientError(w, http.StatusNotFound)
+			return
+		}
+		app.serverError(w, err)
+		return
+	}
+
+	if _, err = os.Stat(uploadedFile.StoragePath); err != nil {
+		app.clientError(w, http.StatusNotFound)
+		return
+	}
+
+	fileNameAndPath := uploadedFile.StoragePath + uploadedFile.FileUUID
+	http.ServeFile(w, r, fileNameAndPath)
 }
 
 func ping(w http.ResponseWriter, r *http.Request) {
