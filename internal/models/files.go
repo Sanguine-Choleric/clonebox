@@ -36,7 +36,7 @@ func (m *FileModel) Insert(fileName string, uuid string, fileSize int, checksum 
 		var mySqlErr *mysql.MySQLError
 		if errors.As(err, &mySqlErr) {
 			if mySqlErr.Number == 1062 {
-				return errors.New("insert duplicate uuid")
+				return ErrDuplicateUUID
 			}
 		}
 		return err

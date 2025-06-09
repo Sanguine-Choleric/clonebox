@@ -274,3 +274,75 @@ func TestLinkShorten(t *testing.T) {
 
 	})
 }
+
+func TestFileUpload(t *testing.T) {
+	app := newTestApplication(t)
+	ts := newTestServer(t, app.routes())
+	defer ts.Close()
+
+	t.Run("Unauthorized File Upload", func(t *testing.T) {
+		code, header, _ := ts.get(t, "/file")
+		assert.Equal(t, code, http.StatusSeeOther)
+		assert.Equal(t, header.Get("Location"), "/user/login")
+	})
+
+	t.Run("Authorized File Upload", func(t *testing.T) {
+		// Logging in user
+		_, _, body := ts.get(t, "/user/signup")
+		validCSRFToken := extractCSRFToken(t, body)
+		form := url.Values{}
+		form.Add("email", "alice@example.com")
+		form.Add("password", "p@ssw0rd")
+		form.Add("csrf_token", validCSRFToken)
+		code, _, _ := ts.postForm(t, "/user/login", form)
+		assert.Equal(t, code, http.StatusSeeOther)
+
+		// Upload test
+		code, _, body = ts.get(t, "/file")
+		assert.Equal(t, code, http.StatusOK)
+		assert.StringContains(t, body, "<form action=\"/file\" method=\"post\" enctype=\"multipart/form-data\">")
+
+		// TODO: Multipart form upload test
+	})
+}
+
+func TestFileView(t *testing.T) {
+	app := newTestApplication(t)
+	ts := newTestServer(t, app.routes())
+	defer ts.Close()
+
+	tests := []struct {
+		name     string
+		urlPath  string
+		wantCode int
+		wantBody string
+	}{
+		{
+			name:     "Valid UUID",
+			urlPath:  "/file/view/123456",
+			wantCode: http.StatusOK,
+			wantBody: "test_file.pdf", // Contains test, don't need exact
+		},
+		{
+			name:     "Non-existent UUID",
+			urlPath:  "/file/view/987654",
+			wantCode: http.StatusNotFound,
+		},
+		{
+			name:     "Empty UUID",
+			urlPath:  "/file/view/",
+			wantCode: http.StatusNotFound,
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			code, _, body := ts.get(t, tt.urlPath)
+			assert.Equal(t, code, tt.wantCode)
+			if tt.wantBody != "" {
+				assert.StringContains(t, body, tt.wantBody)
+			}
+		})
+
+	}
+}

@@ -48,6 +48,7 @@ func newTestApplication(t *testing.T) *application {
 		snippets:       &mocks.SnippetModel{},
 		users:          &mocks.UserModel{},
 		links:          &mocks.LinkMappingModel{},
+		files:          &mocks.FileModel{},
 	}
 }
 

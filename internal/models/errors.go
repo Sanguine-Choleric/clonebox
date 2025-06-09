@@ -12,4 +12,6 @@ var (
 	ErrDuplicateEmail = errors.New("models: duplicate email")
 
 	ErrDuplicateLink = errors.New("models: duplicate short short")
+
+	ErrDuplicateUUID = errors.New("models: duplicate UUID detected")
 )

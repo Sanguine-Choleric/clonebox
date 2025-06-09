@@ -34,7 +34,7 @@ func newTestDB(t *testing.T) *sql.DB {
 	// t.Cleanup() registers a function which will automatically be called by Go when the current test (or sub-test)
 	// which calls newTestDB() has finished. Reads and executes the teardown script, and close the database connection pool.
 	t.Cleanup(func() {
-		script, err := os.ReadFile("./testdata/teardown.sql")
+		script, err = os.ReadFile("./testdata/teardown.sql")
 		if err != nil {
 			t.Fatal(err)
 		}

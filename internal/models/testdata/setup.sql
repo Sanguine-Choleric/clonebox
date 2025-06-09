@@ -33,3 +33,23 @@ CREATE TABLE link_mapping
 INSERT INTO link_mapping (original_link, short_link)
 VALUES ('https://existent.com',
         '123456');
+
+CREATE TABLE files
+(
+    id                 INTEGER             NOT NULL PRIMARY KEY AUTO_INCREMENT,
+    original_file_name VARCHAR(100)        NOT NULL,
+    file_name          VARCHAR(100) UNIQUE NOT NULL,
+    file_size          INTEGER             NOT NULL,
+    checksum           VARCHAR(100)        NOT NULL,
+    storage_path       VARCHAR(100)        NOT NULL,
+    upload_date        DATETIME            NOT NULL
+);
+CREATE INDEX idx_files_file_name ON files (file_name);
+
+INSERT INTO files (original_file_name, file_name, file_size, checksum, storage_path, upload_date)
+VALUES ('test_file.pdf',
+        '123456',
+        100,
+        'abcdef',
+        '/clonebox/upload',
+        '2025-01-01 10:00:00');
