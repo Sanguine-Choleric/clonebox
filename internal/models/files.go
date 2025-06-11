@@ -28,7 +28,7 @@ type File struct {
 }
 
 func (m *FileModel) Insert(fileName string, uuid string, fileSize int, checksum string, storagePath string) error {
-	stmt := `INSERT INTO files (original_file_name, file_name, file_size, checksum, storage_path, upload_date) VALUES (
+	stmt := `INSERT INTO files (file_name, file_uuid, file_size, checksum, storage_path, upload_date) VALUES (
 				?, ?, ?, ?, ?, UTC_TIMESTAMP())`
 
 	_, err := m.DB.Exec(stmt, fileName, uuid, fileSize, checksum, storagePath)
@@ -46,7 +46,7 @@ func (m *FileModel) Insert(fileName string, uuid string, fileSize int, checksum 
 }
 
 func (m *FileModel) GetByUUID(uuid string) (*File, error) {
-	stmt := `SELECT * FROM files WHERE file_name = ?`
+	stmt := `SELECT * FROM files WHERE file_uuid = ?`
 
 	s := &File{}
 

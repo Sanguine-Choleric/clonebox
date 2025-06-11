@@ -84,7 +84,6 @@ func (app *application) snippetView(w http.ResponseWriter, r *http.Request) {
 	public_id := params.ByName("public_id")
 
 	snippet, err := app.snippets.Get(public_id)
-	app.infoLog.Print(snippet) //FIXME: CLEANUP
 	if err != nil {
 		if errors.Is(err, models.ErrNoRecord) {
 			app.notFound(w)

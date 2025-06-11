@@ -36,8 +36,6 @@ services:
       DB_PASS: /run/secrets/db_password
     secrets:
       - db_password
-    ports:
-      - "4000:4000"
     volumes:
       - web_fileShare:/clonebox/uploads
 
@@ -54,8 +52,8 @@ services:
 #      DB_PASS: /run/secrets/db_password
 #    secrets:
 #      - db_password
-#    ports:
-#      - "4000:4000"
+#    volumes:
+#      - web_fileShare:/clonebox/uploads
 
   db:
     image: mariadb:10
