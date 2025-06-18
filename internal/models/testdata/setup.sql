@@ -36,13 +36,13 @@ VALUES ('https://existent.com',
 
 CREATE TABLE files
 (
-    id                 INTEGER             NOT NULL PRIMARY KEY AUTO_INCREMENT,
-    file_name VARCHAR(100)        NOT NULL,
-    file_uuid          VARCHAR(100) UNIQUE NOT NULL,
-    file_size          INTEGER             NOT NULL,
-    checksum           VARCHAR(100)        NOT NULL,
-    storage_path       VARCHAR(100)        NOT NULL,
-    upload_date        DATETIME            NOT NULL
+    id           INTEGER             NOT NULL PRIMARY KEY AUTO_INCREMENT,
+    file_name    VARCHAR(100)        NOT NULL,
+    file_uuid    VARCHAR(100) UNIQUE NOT NULL,
+    file_size    INTEGER             NOT NULL,
+    checksum     VARCHAR(100)        NOT NULL,
+    storage_path VARCHAR(100)        NOT NULL,
+    upload_date  DATETIME            NOT NULL
 );
 CREATE INDEX idx_files_file_name ON files (file_name);
 

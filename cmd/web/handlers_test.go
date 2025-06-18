@@ -8,6 +8,7 @@ import (
 )
 
 func TestPing(t *testing.T) {
+	t.Parallel()
 	app := newTestApplication(t)
 
 	ts := newTestServer(t, app.routes())
@@ -20,6 +21,7 @@ func TestPing(t *testing.T) {
 }
 
 func TestSnippetView(t *testing.T) {
+	t.Parallel()
 	// Create a new instance of our application struct which uses the mocked dependencies
 	app := newTestApplication(t)
 
@@ -79,6 +81,7 @@ func TestSnippetView(t *testing.T) {
 }
 
 func TestUserSignup(t *testing.T) {
+	t.Parallel()
 	app := newTestApplication(t)
 	ts := newTestServer(t, app.routes())
 	defer ts.Close()
@@ -191,6 +194,7 @@ func TestUserSignup(t *testing.T) {
 }
 
 func TestSnippetCreate(t *testing.T) {
+	t.Parallel()
 	app := newTestApplication(t)
 	ts := newTestServer(t, app.routes())
 	defer ts.Close()
@@ -223,6 +227,7 @@ func TestSnippetCreate(t *testing.T) {
 }
 
 func TestLinkShorten(t *testing.T) {
+	t.Parallel()
 	app := newTestApplication(t)
 	ts := newTestServer(t, app.routes())
 	defer ts.Close()
@@ -276,6 +281,7 @@ func TestLinkShorten(t *testing.T) {
 }
 
 func TestFileUpload(t *testing.T) {
+	t.Parallel()
 	app := newTestApplication(t)
 	ts := newTestServer(t, app.routes())
 	defer ts.Close()
@@ -307,6 +313,7 @@ func TestFileUpload(t *testing.T) {
 }
 
 func TestFileView(t *testing.T) {
+	t.Parallel()
 	app := newTestApplication(t)
 	ts := newTestServer(t, app.routes())
 	defer ts.Close()
