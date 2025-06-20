@@ -56,6 +56,8 @@ func (app *application) routes() http.Handler {
 	router.Handler(http.MethodPost, "/shorten", protected.ThenFunc(app.linkShortenPost))
 	router.Handler(http.MethodGet, "/file", protected.ThenFunc(app.fileUpload))
 	router.Handler(http.MethodPost, "/file", protected.ThenFunc(app.fileUploadPost))
+	router.Handler(http.MethodGet, "/bill_split", protected.ThenFunc(app.billSplit))
+	router.Handler(http.MethodPost, "/bill_split", protected.ThenFunc(app.billSplitPost))
 
 	standard := alice.New(app.recoverPanic, app.logRequest, secureHeaders)
 	return standard.Then(router)

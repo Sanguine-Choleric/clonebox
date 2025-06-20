@@ -4,10 +4,12 @@ import (
 	"crypto/md5"
 	"crypto/sha256"
 	"database/sql"
+	"encoding/json"
 	"errors"
 	"fmt"
 	"github.com/google/uuid"
 	"github.com/julienschmidt/httprouter"
+	"google.golang.org/genai"
 	"io"
 	"net/http"
 	"os"
@@ -532,6 +534,71 @@ func (app *application) fileDownload(w http.ResponseWriter, r *http.Request) {
 
 	fileNameAndPath := uploadedFile.StoragePath + uploadedFile.FileUUID
 	http.ServeFile(w, r, fileNameAndPath)
+}
+
+type billItem struct {
+	Name     string
+	Price    float32
+	Quantity int
+}
+
+func (app *application) billSplit(w http.ResponseWriter, r *http.Request) {
+	data := app.newTemplateData(r)
+	//data.Form = billSplitForm{}
+
+	app.render(w, http.StatusOK, "bill_split.tmpl.html", data)
+}
+
+func (app *application) billSplitPost(w http.ResponseWriter, r *http.Request) {
+	err := r.ParseMultipartForm(5 << 20)
+	if err != nil {
+		app.serverError(w, err)
+		return
+	}
+
+	receiptImage, _, err := r.FormFile("file")
+	if err != nil {
+		app.serverError(w, err)
+		return
+	}
+	defer receiptImage.Close()
+
+	bytes, err := io.ReadAll(receiptImage)
+	if err != nil {
+		app.serverError(w, err)
+		return
+	}
+
+	parts := []*genai.Part{
+		genai.NewPartFromBytes(bytes, "image/jpeg"),
+		genai.NewPartFromText("Give me the name, price, and quantity of each item in this receipt\n"),
+	}
+
+	contents := []*genai.Content{
+		genai.NewContentFromParts(parts, genai.RoleUser),
+	}
+
+	result, err := app.llmClient.Models.GenerateContent(
+		r.Context(),
+		"gemini-2.0-flash-lite",
+		contents,
+		app.llmConfig,
+	)
+
+	if err != nil {
+		app.serverError(w, fmt.Errorf("failed llm generate: %w", err))
+		return
+	}
+
+	var items []billItem
+	err = json.Unmarshal([]byte(result.Text()), &items)
+	if err != nil {
+		app.serverError(w, fmt.Errorf("failed llm unmarshal: %w", err))
+		return
+	}
+
+	app.infoLog.Println(items)
+
 }
 
 func ping(w http.ResponseWriter, r *http.Request) {
