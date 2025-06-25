@@ -569,25 +569,159 @@ func (app *application) billSplitPost(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	parts := []*genai.Part{
-		genai.NewPartFromBytes(bytes, "image/jpeg"),
-		genai.NewPartFromText("Give me the name, price, and quantity of each item in this receipt\n"),
-	}
+	// Test response
+	var result *genai.GenerateContentResponse
+	if *app.debug {
+		testString := `[
+  {
+    "name": "Moscow Mule",
+    "price": 8.9,
+    "quantity": 3
+  },
+  {
+    "name": "Franziskaner Hefeweizen",
+    "price": 5.5,
+    "quantity": 4
+  },
+  {
+    "name": "Riq. Sauvignon Blanc",
+    "price": 6.9,
+    "quantity": 1
+  },
+  {
+    "name": "Krombacher Pils 0,4L",
+    "price": 5.5,
+    "quantity": 1
+  },
+  {
+    "name": "K1. House Salad",
+    "price": 5.9,
+    "quantity": 1
+  },
+  {
+    "name": "Starter Caesar Salad",
+    "price": 6.9,
+    "quantity": 1
+  },
+  {
+    "name": "Caesar Garnelen",
+    "price": 17.9,
+    "quantity": 1
+  },
+  {
+    "name": "Starter Caesar Salad",
+    "price": 6.9,
+    "quantity": 1
+  },
+  {
+    "name": "240g Hähnchenbrustfilet",
+    "price": 22.9,
+    "quantity": 1
+  },
+  {
+    "name": "Süßkartoffel Fries",
+    "price": 5.9,
+    "quantity": 1
+  },
+  {
+    "name": "M 300g Arg. Rumpsteak",
+    "price": 34.9,
+    "quantity": 1
+  },
+  {
+    "name": "M 300g Arg. Huftsteak",
+    "price": 34.9,
+    "quantity": 1
+  },
+  {
+    "name": "M 400g Arg. Entrecôte",
+    "price": 49.9,
+    "quantity": 1
+  },
+  {
+    "name": "Baked Kartöffeli",
+    "price": 5.9,
+    "quantity": 1
+  },
+  {
+    "name": "M 300g Arg. Huftsteak",
+    "price": 34.9,
+    "quantity": 1
+  },
+  {
+    "name": "Knoblauch-Kräuterbutter",
+    "price": 3.9,
+    "quantity": 1
+  },
+  {
+    "name": "Trüffel Butter",
+    "price": 3.9,
+    "quantity": 1
+  },
+  {
+    "name": "Aqua Panna 0,75L",
+    "price": 6.9,
+    "quantity": 1
+  },
+  {
+    "name": "Whiskey Sour",
+    "price": 8.9,
+    "quantity": 1
+  },
+  {
+    "name": "Oreo Brownie",
+    "price": 8.9,
+    "quantity": 1
+  },
+  {
+    "name": "Latte Macchiato",
+    "price": 3.9,
+    "quantity": 1
+  },
+  {
+    "name": "Apple Pie",
+    "price": 8.9,
+    "quantity": 2
+  },
+  {
+    "name": "Jägermeister 4cl",
+    "price": 4.9,
+    "quantity": 4
+  }
+]`
+		result = &genai.GenerateContentResponse{
+			Candidates: []*genai.Candidate{
+				&genai.Candidate{
+					Content: &genai.Content{
+						Parts: []*genai.Part{
+							&genai.Part{Text: testString},
+						},
+					},
+				},
+			},
+		}
+	} else {
+		//Actual LLM call
+		parts := []*genai.Part{
+			genai.NewPartFromBytes(bytes, "image/jpeg"),
+			genai.NewPartFromText("Give me the name, price, and quantity of each item in this receipt\n"),
+		}
 
-	contents := []*genai.Content{
-		genai.NewContentFromParts(parts, genai.RoleUser),
-	}
+		contents := []*genai.Content{
+			genai.NewContentFromParts(parts, genai.RoleUser),
+		}
 
-	result, err := app.llmClient.Models.GenerateContent(
-		r.Context(),
-		"gemini-2.0-flash-lite",
-		contents,
-		app.llmConfig,
-	)
+		result, err = app.llmClient.Models.GenerateContent(
+			r.Context(),
+			"gemini-2.0-flash-lite",
+			contents,
+			app.llmConfig,
+		)
 
-	if err != nil {
-		app.serverError(w, fmt.Errorf("failed llm generate: %w", err))
-		return
+		if err != nil {
+			app.serverError(w, fmt.Errorf("failed llm generate: %w", err))
+			return
+		}
 	}
 
 	var items []models.BillItem
@@ -597,7 +731,7 @@ func (app *application) billSplitPost(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	app.infoLog.Println(items)
+	app.infoLog.Println(result.Text())
 
 	data := app.newTemplateData(r)
 	data.BillItems = items

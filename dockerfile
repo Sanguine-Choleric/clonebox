@@ -15,4 +15,4 @@ WORKDIR /app
 COPY --from=build-stage /app/web /app/web
 EXPOSE 2345
 
-CMD ["/app/web"]
+CMD ["/app/web", "-debug"]

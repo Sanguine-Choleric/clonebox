@@ -86,12 +86,14 @@ func main() {
 	// Gemini integration - doing this here so i don't create a new geminiClient for every request
 	ctx := context.Background()
 	geminiClient, err := genai.NewClient(ctx, &genai.ClientConfig{
+		// FIXME: Use an env
 		APIKey:  "AIzaSyDYOKJUo-1F_C7N1i4kJhsbEoE_ewDiKdY",
 		Backend: genai.BackendGeminiAPI,
 	})
 	if err != nil {
 		errorLog.Fatal(err)
 	}
+
 	geminiConfig := &genai.GenerateContentConfig{
 		ResponseMIMEType: "application/json",
 		ResponseSchema: &genai.Schema{
