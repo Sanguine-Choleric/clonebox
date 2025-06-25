@@ -536,12 +536,6 @@ func (app *application) fileDownload(w http.ResponseWriter, r *http.Request) {
 	http.ServeFile(w, r, fileNameAndPath)
 }
 
-type billItem struct {
-	Name     string
-	Price    float32
-	Quantity int
-}
-
 func (app *application) billSplit(w http.ResponseWriter, r *http.Request) {
 	data := app.newTemplateData(r)
 	//data.Form = billSplitForm{}
@@ -569,6 +563,12 @@ func (app *application) billSplitPost(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
+	// TODO Use a flash error instead
+	if http.DetectContentType(bytes) != "image/jpeg" {
+		app.clientError(w, http.StatusUnsupportedMediaType)
+		return
+	}
+
 	parts := []*genai.Part{
 		genai.NewPartFromBytes(bytes, "image/jpeg"),
 		genai.NewPartFromText("Give me the name, price, and quantity of each item in this receipt\n"),
@@ -590,7 +590,7 @@ func (app *application) billSplitPost(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	var items []billItem
+	var items []models.BillItem
 	err = json.Unmarshal([]byte(result.Text()), &items)
 	if err != nil {
 		app.serverError(w, fmt.Errorf("failed llm unmarshal: %w", err))
@@ -599,6 +599,9 @@ func (app *application) billSplitPost(w http.ResponseWriter, r *http.Request) {
 
 	app.infoLog.Println(items)
 
+	data := app.newTemplateData(r)
+	data.BillItems = items
+	app.render(w, http.StatusOK, "bill_split.tmpl.html", data)
 }
 
 func ping(w http.ResponseWriter, r *http.Request) {

@@ -9,4 +9,24 @@
             <input type="submit" value="Upload">
         </div>
     </form>
+    {{if .BillItems}}
+        <table id="split_table">
+            <thead>
+            <tr>
+                <th>Name</th>
+                <th>Price</th>
+                <th>Quantity</th>
+            </tr>
+            </thead>
+            <tbody>
+            {{range .BillItems}}
+                <tr>
+                    <td data-type="iname" contenteditable="true">{{.Name}}</td>
+                    <td data-type="price" contenteditable="true">{{.Price}}</td>
+                    <td data-type="quantity" contenteditable="true">{{.Quantity}}</td>
+                </tr>
+            {{end}}
+            </tbody>
+        </table>
+    {{end}}
 {{end}}

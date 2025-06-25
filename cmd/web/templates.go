@@ -22,6 +22,7 @@ type templateData struct {
 	IsAuthenticated bool
 	CSRFToken       string
 	User            *models.User
+	BillItems       []models.BillItem
 }
 
 // A humanDate function which returns a formatted string representation of a time.Time object.
