@@ -7,15 +7,16 @@ import (
 	"encoding/json"
 	"errors"
 	"fmt"
-	"github.com/google/uuid"
-	"github.com/julienschmidt/httprouter"
-	"google.golang.org/genai"
 	"io"
 	"net/http"
 	"os"
 	"snippetbox/internal/models"
 	"snippetbox/internal/validator"
 	"strings"
+
+	"github.com/google/uuid"
+	"github.com/julienschmidt/httprouter"
+	"google.golang.org/genai"
 )
 
 type snippetCreateForm struct {
@@ -704,7 +705,9 @@ func (app *application) billSplitPost(w http.ResponseWriter, r *http.Request) {
 		//Actual LLM call
 		parts := []*genai.Part{
 			genai.NewPartFromBytes(bytes, "image/jpeg"),
-			genai.NewPartFromText("Give me the name, price, and quantity of each item in this receipt\n"),
+			genai.NewPartFromText(
+				"Give me the name, price, and quantity of each item in this receipt. Include tax and other fees as its own item with a name (Tax + fees), price, quantity (1). If the image isn't a receipt, only give a single item with a name (Error), price (0), quantity (0)",
+			),
 		}
 
 		contents := []*genai.Content{

@@ -6,13 +6,14 @@ import (
 	"database/sql"
 	"flag"
 	"fmt"
-	"google.golang.org/genai"
 	"html/template"
 	"log"
 	"net/http"
 	"os"
 	"strings"
 	"time"
+
+	"google.golang.org/genai"
 
 	"github.com/alexedwards/scs/mysqlstore"
 	"github.com/alexedwards/scs/v2"
@@ -84,10 +85,15 @@ func main() {
 	sessionManager.Cookie.Secure = true
 
 	// Gemini integration - doing this here so i don't create a new geminiClient for every request
+	llm_key, err := os.ReadFile("/run/secrets/web_llm_api_key")
+	API_KEY := strings.TrimSpace(string(llm_key))
+	if err != nil {
+		errorLog.Printf("%s", err)
+	}
 	ctx := context.Background()
 	geminiClient, err := genai.NewClient(ctx, &genai.ClientConfig{
 		// FIXME: Use an env
-		APIKey:  "AIzaSyDYOKJUo-1F_C7N1i4kJhsbEoE_ewDiKdY",
+		APIKey:  API_KEY,
 		Backend: genai.BackendGeminiAPI,
 	})
 	if err != nil {

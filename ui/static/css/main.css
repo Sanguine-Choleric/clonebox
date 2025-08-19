@@ -326,6 +326,19 @@ tr:nth-child(2n) {
     background-color: #F7F9FA;
 }
 
+thead tr {
+    border: 1px solid #E4E5E7;
+}
+
+tbody td {
+    border-left: 1px solid #E4E5E7;
+    border-right: 1px solid #E4E5E7;
+}
+
+.price_column, .quantity_column {
+    width: 0;
+}
+
 p {
     margin-bottom: 54px;
 }
