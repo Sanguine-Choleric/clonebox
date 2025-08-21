@@ -85,6 +85,7 @@ function js_totals_to_html_convert(totals) {
     if (!totalsTable) {
         totalsTable = document.createElement('table')
         totalsTable.id = 'totals_table'
+        totalsTable.className = 'pair_table'
     } else {
         totalsTable.replaceChildren()
     }
@@ -191,6 +192,7 @@ document.addEventListener('DOMContentLoaded', () => {
         const headerRow = table.querySelector('thead tr')
         if (headerRow) {
             const newHeaderCell = document.createElement('th')
+            newHeaderCell.className = 'person_column'
             newHeaderCell.content = ''
             newHeaderCell.contentEditable = 'true'
             headerRow.appendChild(newHeaderCell)
@@ -199,6 +201,7 @@ document.addEventListener('DOMContentLoaded', () => {
         const dataRows = table.querySelectorAll('tbody tr')
         dataRows.forEach(row => {
             const newDataCell = document.createElement('td')
+            newDataCell.className = 'person_column'
             const quantity = parseInt(row.querySelector('td[data-type="quantity"]').textContent)
             if (quantity === 1) {
                 const checkbox = document.createElement('input')

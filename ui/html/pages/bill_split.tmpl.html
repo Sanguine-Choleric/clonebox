@@ -1,7 +1,8 @@
 {{define "title"}}Bill Split{{end}}
 {{define "main"}}
-    <p>ALWAYS double check correctness of item names, quantities, and prices. OCS is unreliable and may be incorrect.</p>
-    <p>Output table is modifiable to an extent. Contact me if you have a receipt that gets processed so poorly that it can't be corrected.</p>
+    <p>ALWAYS double check correctness of item names, quantities, and prices. OCS is unreliable and may be
+        incorrect.</p>
+    <p>Output table is modifiable to an extent.</p>
     <form action="/bill_split" method="post" enctype="multipart/form-data">
         <input type="hidden" name="csrf_token" value={{.CSRFToken}}>
         <div>
@@ -12,8 +13,11 @@
         </div>
     </form>
     {{if .BillItems}}
-        <button id="add-column-btn">Add Person</button>
-        <button id="remove-column-btn">Remove Person</button>
+        <div class="column_btns">
+            <button id="add-column-btn">Add Person</button>
+             |
+            <button id="remove-column-btn">Remove Person</button>
+        </div>
         <table id="split_table">
             <colgroup>
                 <col class="name_column">
@@ -37,6 +41,6 @@
             {{end}}
             </tbody>
         </table>
-            <button id="calc-splits-btn">Calculate Splits</button>
+        <button id="calc-splits-btn">Calculate Splits</button>
     {{end}}
 {{end}}

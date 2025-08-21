@@ -300,6 +300,15 @@ div.error {
     text-align: center;
 }
 
+.column_btns {
+    display: flex;
+    justify-content: flex-end;
+}
+
+#add-column-btn, #remove-column-btn {
+    display: block;
+}
+
 table {
     background: white;
     border: 1px solid #E4E5E7;
@@ -313,7 +322,8 @@ td, th {
     padding: 9px 18px;
 }
 
-th:last-child, td:last-child {
+.pair_table th:last-child,
+.pair_table td:last-child {
     text-align: right;
     color: #6A6C6F;
 }
@@ -336,7 +346,14 @@ tbody td {
 }
 
 .price_column, .quantity_column {
+    text-align: right;
     width: 0;
+}
+
+.person_column {
+    text-align: right;
+    width: 0;
+    white-space: nowrap;
 }
 
 p {

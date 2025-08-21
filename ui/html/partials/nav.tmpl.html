@@ -3,11 +3,12 @@
         <div>
             <a href='/'>Home</a>
             <a href='/about'>About</a>
-            {{if .IsAuthenticated}}
-                <a href="/snippet/create">Create Snippet</a>
-                <a href="/shorten">Shorten Links</a>
-                <a href="/file">Share Files</a>
-            {{end}}
+            <a href='/tools'>Tools</a>
+{{/*            {{if .IsAuthenticated}}*/}}
+{{/*                <a href="/snippet/create">Create Snippet</a>*/}}
+{{/*                <a href="/shorten">Shorten Links</a>*/}}
+{{/*                <a href="/file">Share Files</a>*/}}
+{{/*            {{end}}*/}}
         </div>
         <div>
             {{if .IsAuthenticated}}
