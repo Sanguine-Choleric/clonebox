@@ -34,6 +34,7 @@ func (app *application) routes() http.Handler {
 
 	router.Handler(http.MethodGet, "/", dynamic.ThenFunc(app.home))
 	router.Handler(http.MethodGet, "/about", dynamic.ThenFunc(app.about))
+	router.Handler(http.MethodGet, "/tools", dynamic.ThenFunc(app.tools))
 	router.Handler(http.MethodGet, "/snippet/view/:public_id", dynamic.ThenFunc(app.snippetView))
 	router.Handler(http.MethodGet, "/user/signup", dynamic.ThenFunc(app.userSignup))
 	router.Handler(http.MethodPost, "/user/signup", dynamic.ThenFunc(app.userSignupPost))
@@ -56,6 +57,8 @@ func (app *application) routes() http.Handler {
 	router.Handler(http.MethodPost, "/shorten", protected.ThenFunc(app.linkShortenPost))
 	router.Handler(http.MethodGet, "/file", protected.ThenFunc(app.fileUpload))
 	router.Handler(http.MethodPost, "/file", protected.ThenFunc(app.fileUploadPost))
+	router.Handler(http.MethodGet, "/bill_split", protected.ThenFunc(app.billSplit))
+	router.Handler(http.MethodPost, "/bill_split", protected.ThenFunc(app.billSplitPost))
 
 	standard := alice.New(app.recoverPanic, app.logRequest, secureHeaders)
 	return standard.Then(router)

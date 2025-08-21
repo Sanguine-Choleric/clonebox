@@ -4,16 +4,19 @@ import (
 	"crypto/md5"
 	"crypto/sha256"
 	"database/sql"
+	"encoding/json"
 	"errors"
 	"fmt"
-	"github.com/google/uuid"
-	"github.com/julienschmidt/httprouter"
 	"io"
 	"net/http"
 	"os"
 	"snippetbox/internal/models"
 	"snippetbox/internal/validator"
 	"strings"
+
+	"github.com/google/uuid"
+	"github.com/julienschmidt/httprouter"
+	"google.golang.org/genai"
 )
 
 type snippetCreateForm struct {
@@ -76,6 +79,11 @@ func (app *application) home(w http.ResponseWriter, r *http.Request) {
 func (app *application) about(w http.ResponseWriter, r *http.Request) {
 	data := app.newTemplateData(r)
 	app.render(w, http.StatusOK, "about.tmpl.html", data)
+}
+
+func (app *application) tools(w http.ResponseWriter, r *http.Request) {
+	data := app.newTemplateData(r)
+	app.render(w, http.StatusOK, "tools.tmpl.html", data)
 }
 
 func (app *application) snippetView(w http.ResponseWriter, r *http.Request) {
@@ -532,6 +540,210 @@ func (app *application) fileDownload(w http.ResponseWriter, r *http.Request) {
 
 	fileNameAndPath := uploadedFile.StoragePath + uploadedFile.FileUUID
 	http.ServeFile(w, r, fileNameAndPath)
+}
+
+func (app *application) billSplit(w http.ResponseWriter, r *http.Request) {
+	data := app.newTemplateData(r)
+	//data.Form = billSplitForm{}
+
+	app.render(w, http.StatusOK, "bill_split.tmpl.html", data)
+}
+
+func (app *application) billSplitPost(w http.ResponseWriter, r *http.Request) {
+	err := r.ParseMultipartForm(5 << 20)
+	if err != nil {
+		app.serverError(w, err)
+		return
+	}
+
+	receiptImage, _, err := r.FormFile("file")
+	if err != nil {
+		app.serverError(w, err)
+		return
+	}
+	defer receiptImage.Close()
+
+	bytes, err := io.ReadAll(receiptImage)
+	if err != nil {
+		app.serverError(w, err)
+		return
+	}
+
+	// TODO Use a flash error instead
+	if http.DetectContentType(bytes) != "image/jpeg" {
+		app.clientError(w, http.StatusUnsupportedMediaType)
+		return
+	}
+
+	// Test response
+	var result *genai.GenerateContentResponse
+	if *app.debug {
+		testString := `[
+  {
+    "name": "Moscow Mule",
+    "price": 8.9,
+    "quantity": 3
+  },
+  {
+    "name": "Franziskaner Hefeweizen",
+    "price": 5.5,
+    "quantity": 4
+  },
+  {
+    "name": "Riq. Sauvignon Blanc",
+    "price": 6.9,
+    "quantity": 1
+  },
+  {
+    "name": "Krombacher Pils 0,4L",
+    "price": 5.5,
+    "quantity": 1
+  },
+  {
+    "name": "K1. House Salad",
+    "price": 5.9,
+    "quantity": 1
+  },
+  {
+    "name": "Starter Caesar Salad",
+    "price": 6.9,
+    "quantity": 1
+  },
+  {
+    "name": "Caesar Garnelen",
+    "price": 17.9,
+    "quantity": 1
+  },
+  {
+    "name": "Starter Caesar Salad",
+    "price": 6.9,
+    "quantity": 1
+  },
+  {
+    "name": "240g Hähnchenbrustfilet",
+    "price": 22.9,
+    "quantity": 1
+  },
+  {
+    "name": "Süßkartoffel Fries",
+    "price": 5.9,
+    "quantity": 1
+  },
+  {
+    "name": "M 300g Arg. Rumpsteak",
+    "price": 34.9,
+    "quantity": 1
+  },
+  {
+    "name": "M 300g Arg. Huftsteak",
+    "price": 34.9,
+    "quantity": 1
+  },
+  {
+    "name": "M 400g Arg. Entrecôte",
+    "price": 49.9,
+    "quantity": 1
+  },
+  {
+    "name": "Baked Kartöffeli",
+    "price": 5.9,
+    "quantity": 1
+  },
+  {
+    "name": "M 300g Arg. Huftsteak",
+    "price": 34.9,
+    "quantity": 1
+  },
+  {
+    "name": "Knoblauch-Kräuterbutter",
+    "price": 3.9,
+    "quantity": 1
+  },
+  {
+    "name": "Trüffel Butter",
+    "price": 3.9,
+    "quantity": 1
+  },
+  {
+    "name": "Aqua Panna 0,75L",
+    "price": 6.9,
+    "quantity": 1
+  },
+  {
+    "name": "Whiskey Sour",
+    "price": 8.9,
+    "quantity": 1
+  },
+  {
+    "name": "Oreo Brownie",
+    "price": 8.9,
+    "quantity": 1
+  },
+  {
+    "name": "Latte Macchiato",
+    "price": 3.9,
+    "quantity": 1
+  },
+  {
+    "name": "Apple Pie",
+    "price": 8.9,
+    "quantity": 2
+  },
+  {
+    "name": "Jägermeister 4cl",
+    "price": 4.9,
+    "quantity": 4
+  }
+]`
+		result = &genai.GenerateContentResponse{
+			Candidates: []*genai.Candidate{
+				&genai.Candidate{
+					Content: &genai.Content{
+						Parts: []*genai.Part{
+							&genai.Part{Text: testString},
+						},
+					},
+				},
+			},
+		}
+	} else {
+		//Actual LLM call
+		parts := []*genai.Part{
+			genai.NewPartFromBytes(bytes, "image/jpeg"),
+			genai.NewPartFromText(
+				"Give me the name, price, and quantity of each item in this receipt. Include tax and other fees as its own item with a name (Tax + fees), price, quantity (1). If the image isn't a receipt, only give a single item with a name (Error), price (0), quantity (0)",
+			),
+		}
+
+		contents := []*genai.Content{
+			genai.NewContentFromParts(parts, genai.RoleUser),
+		}
+
+		result, err = app.llmClient.Models.GenerateContent(
+			r.Context(),
+			"gemini-2.0-flash-lite",
+			contents,
+			app.llmConfig,
+		)
+
+		if err != nil {
+			app.serverError(w, fmt.Errorf("failed llm generate: %w", err))
+			return
+		}
+	}
+
+	var items []models.BillItem
+	err = json.Unmarshal([]byte(result.Text()), &items)
+	if err != nil {
+		app.serverError(w, fmt.Errorf("failed llm unmarshal: %w", err))
+		return
+	}
+
+	app.infoLog.Println(result.Text())
+
+	data := app.newTemplateData(r)
+	data.BillItems = items
+	app.render(w, http.StatusOK, "bill_split.tmpl.html", data)
 }
 
 func ping(w http.ResponseWriter, r *http.Request) {

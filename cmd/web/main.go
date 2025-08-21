@@ -1,6 +1,7 @@
 package main
 
 import (
+	"context"
 	"crypto/tls"
 	"database/sql"
 	"flag"
@@ -11,6 +12,8 @@ import (
 	"os"
 	"strings"
 	"time"
+
+	"google.golang.org/genai"
 
 	"github.com/alexedwards/scs/mysqlstore"
 	"github.com/alexedwards/scs/v2"
@@ -32,6 +35,8 @@ type application struct {
 	templateCache  map[string]*template.Template
 	formDecoder    *form.Decoder
 	sessionManager *scs.SessionManager
+	llmClient      *genai.Client
+	llmConfig      *genai.GenerateContentConfig
 }
 
 func main() {
@@ -79,6 +84,38 @@ func main() {
 	sessionManager.Lifetime = 12 * time.Hour
 	sessionManager.Cookie.Secure = true
 
+	// Gemini integration - doing this here so i don't create a new geminiClient for every request
+	llm_key, err := os.ReadFile("/run/secrets/web_llm_api_key")
+	API_KEY := strings.TrimSpace(string(llm_key))
+	if err != nil {
+		errorLog.Printf("%s", err)
+	}
+	ctx := context.Background()
+	geminiClient, err := genai.NewClient(ctx, &genai.ClientConfig{
+		// FIXME: Use an env
+		APIKey:  API_KEY,
+		Backend: genai.BackendGeminiAPI,
+	})
+	if err != nil {
+		errorLog.Fatal(err)
+	}
+
+	geminiConfig := &genai.GenerateContentConfig{
+		ResponseMIMEType: "application/json",
+		ResponseSchema: &genai.Schema{
+			Type: genai.TypeArray,
+			Items: &genai.Schema{
+				Type: genai.TypeObject,
+				Properties: map[string]*genai.Schema{
+					"name":     {Type: genai.TypeString},
+					"price":    {Type: genai.TypeNumber},
+					"quantity": {Type: genai.TypeInteger},
+				},
+				PropertyOrdering: []string{"name", "price", "quantity"},
+			},
+		},
+	}
+
 	app := &application{
 		debug:          debug,
 		errorLog:       errorLog,
@@ -90,6 +127,8 @@ func main() {
 		templateCache:  templateCache,
 		formDecoder:    formDecoder,
 		sessionManager: sessionManager,
+		llmClient:      geminiClient,
+		llmConfig:      geminiConfig,
 	}
 
 	tlsConfig := &tls.Config{

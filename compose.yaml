@@ -34,8 +34,10 @@ services:
       DB_NAME: snippetbox
       DB_USER: web
       DB_PASS: /run/secrets/db_password
+      LLM_KEY: /run/secrets/web_llm_api_key
     secrets:
       - db_password
+      - web_llm_api_key
     volumes:
       - web_fileShare:/clonebox/uploads
 
@@ -92,6 +94,8 @@ secrets:
     file: ./compose/secrets/db_password
   db_root_password:
     file: ./compose/secrets/db_root_password
+  web_llm_api_key:
+    file: ./compose/secrets/web_llm_api_key
 
 volumes:
   db_data:

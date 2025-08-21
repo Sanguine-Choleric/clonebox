@@ -1,0 +1,46 @@
+{{define "title"}}Bill Split{{end}}
+{{define "main"}}
+    <p>ALWAYS double check correctness of item names, quantities, and prices. OCS is unreliable and may be
+        incorrect.</p>
+    <p>Output table is modifiable to an extent.</p>
+    <form action="/bill_split" method="post" enctype="multipart/form-data">
+        <input type="hidden" name="csrf_token" value={{.CSRFToken}}>
+        <div>
+            <input type="file" name="file" id="file" accept="image/jpeg" required>
+        </div>
+        <div>
+            <input type="submit" value="Upload">
+        </div>
+    </form>
+    {{if .BillItems}}
+        <div class="column_btns">
+            <button id="add-column-btn">Add Person</button>
+             |
+            <button id="remove-column-btn">Remove Person</button>
+        </div>
+        <table id="split_table">
+            <colgroup>
+                <col class="name_column">
+                <col class="price_column">
+                <col class="quantity_column">
+            </colgroup>
+            <thead>
+            <tr>
+                <th>Name</th>
+                <th>$</th>
+                <th>#</th>
+            </tr>
+            </thead>
+            <tbody>
+            {{range .BillItems}}
+                <tr>
+                    <td data-type="iname" contenteditable="true">{{.Name}}</td>
+                    <td data-type="price" contenteditable="true">{{.Price}}</td>
+                    <td data-type="quantity" contenteditable="true">{{.Quantity}}</td>
+                </tr>
+            {{end}}
+            </tbody>
+        </table>
+        <button id="calc-splits-btn">Calculate Splits</button>
+    {{end}}
+{{end}}
