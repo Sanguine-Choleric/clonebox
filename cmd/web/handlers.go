@@ -739,8 +739,6 @@ func (app *application) billSplitPost(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	app.infoLog.Println(result.Text())
-
 	data := app.newTemplateData(r)
 	data.BillItems = items
 	app.render(w, http.StatusOK, "bill_split.tmpl.html", data)

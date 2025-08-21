@@ -281,7 +281,7 @@ document.addEventListener('DOMContentLoaded', () => {
             totals[name] = totals[name].toFixed(2)
         }
 
-        console.log('Totals by person:', totals)
+        // console.log('Totals by person:', totals)
 
         // Converting js totals table into real html table
         js_totals_to_html_convert(totals);
