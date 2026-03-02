@@ -721,7 +721,7 @@ func (app *application) billSplitPost(w http.ResponseWriter, r *http.Request) {
 
 		result, err = app.llmClient.Models.GenerateContent(
 			r.Context(),
-			"gemini-2.0-flash-lite",
+			"gemini-2.5-flash-lite",
 			contents,
 			app.llmConfig,
 		)
