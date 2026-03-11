@@ -8,8 +8,10 @@ import (
 	"errors"
 	"fmt"
 	"io"
+	"mime"
 	"net/http"
 	"os"
+	"slices"
 	"snippetbox/internal/models"
 	"snippetbox/internal/validator"
 	"strings"
@@ -549,6 +551,18 @@ func (app *application) billSplit(w http.ResponseWriter, r *http.Request) {
 	app.render(w, http.StatusOK, "bill_split.tmpl.html", data)
 }
 
+func (app *application) matchesMimeType(pattern, mimeType string) bool {
+	pattern = strings.TrimSpace(pattern)
+	parsedMimetype, _, err := mime.ParseMediaType(mimeType)
+	if err != nil {
+		app.errorLog.Printf("%s", err)
+	}
+	if strings.HasSuffix(pattern, "*") {
+		return strings.HasPrefix(parsedMimetype, strings.TrimSuffix(pattern, "*"))
+	}
+	return pattern == parsedMimetype
+}
+
 func (app *application) billSplitPost(w http.ResponseWriter, r *http.Request) {
 	err := r.ParseMultipartForm(5 << 20)
 	if err != nil {
@@ -570,8 +584,18 @@ func (app *application) billSplitPost(w http.ResponseWriter, r *http.Request) {
 	}
 
 	// TODO Use a flash error instead
-	if http.DetectContentType(bytes) != "image/jpeg" {
+	// Single source of truth for accepted types
+	acceptedTypes := app.receiptConfig["AcceptedMimetypes"]
+	splitTypes := strings.Split(acceptedTypes, ",")
+	mimeType := http.DetectContentType(bytes)
+	// Matches types like image/* and application/pdf
+	validType := slices.ContainsFunc(splitTypes, func(t string) bool {
+		return app.matchesMimeType(t, mimeType)
+	})
+
+	if !validType {
 		app.clientError(w, http.StatusUnsupportedMediaType)
+		app.errorLog.Printf("%s:%s", http.StatusText(http.StatusUnsupportedMediaType), mimeType)
 		return
 	}
 
@@ -697,19 +721,22 @@ func (app *application) billSplitPost(w http.ResponseWriter, r *http.Request) {
 ]`
 		result = &genai.GenerateContentResponse{
 			Candidates: []*genai.Candidate{
-				&genai.Candidate{
+				{
 					Content: &genai.Content{
 						Parts: []*genai.Part{
-							&genai.Part{Text: testString},
+							{Text: testString},
 						},
 					},
 				},
 			},
 		}
 	} else {
-		//Actual LLM call
+		// Actual LLM call
+		mimeType = http.DetectContentType(bytes)
+
 		parts := []*genai.Part{
-			genai.NewPartFromBytes(bytes, "image/jpeg"),
+
+			genai.NewPartFromBytes(bytes, mimeType),
 			genai.NewPartFromText(
 				"Give me the name, price, and quantity of each item in this receipt. Include tax and other fees as its own item with a name (Tax + fees), price, quantity (1). If the image isn't a receipt, only give a single item with a name (Error), price (0), quantity (0)",
 			),

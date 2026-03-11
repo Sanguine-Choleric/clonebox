@@ -6,7 +6,7 @@
     <form action="/bill_split" method="post" enctype="multipart/form-data">
         <input type="hidden" name="csrf_token" value={{.CSRFToken}}>
         <div>
-            <input type="file" name="file" id="file" accept="image/jpeg" required>
+            <input type="file" name="file" id="file" accept="{{.ReceiptMimeType}}}}" required>
         </div>
         <div>
             <input type="submit" value="Upload">

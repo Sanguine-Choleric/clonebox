@@ -37,6 +37,7 @@ type application struct {
 	sessionManager *scs.SessionManager
 	llmClient      *genai.Client
 	llmConfig      *genai.GenerateContentConfig
+	receiptConfig  map[string]string
 }
 
 func main() {
@@ -116,6 +117,10 @@ func main() {
 		},
 	}
 
+	receiptConfig := map[string]string{
+		"AcceptedMimetypes": "image/*,application/pdf",
+	}
+
 	app := &application{
 		debug:          debug,
 		errorLog:       errorLog,
@@ -129,6 +134,7 @@ func main() {
 		sessionManager: sessionManager,
 		llmClient:      geminiClient,
 		llmConfig:      geminiConfig,
+		receiptConfig:  receiptConfig,
 	}
 
 	tlsConfig := &tls.Config{

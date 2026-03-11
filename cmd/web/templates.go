@@ -23,6 +23,7 @@ type templateData struct {
 	CSRFToken       string
 	User            *models.User
 	BillItems       []models.BillItem
+	ReceiptMimeType string
 }
 
 // A humanDate function which returns a formatted string representation of a time.Time object.

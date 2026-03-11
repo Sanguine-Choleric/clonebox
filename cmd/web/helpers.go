@@ -4,11 +4,12 @@ import (
 	"bytes"
 	"errors"
 	"fmt"
-	"github.com/go-playground/form/v4"
-	"github.com/justinas/nosurf"
 	"net/http"
 	"runtime/debug"
 	"time"
+
+	"github.com/go-playground/form/v4"
+	"github.com/justinas/nosurf"
 )
 
 // serverError helper writes an error message and stack trace to the errorLog, then sends a generic 500 Internal
@@ -64,6 +65,7 @@ func (app *application) newTemplateData(r *http.Request) *templateData {
 		Flash:           app.sessionManager.PopString(r.Context(), "flash"),
 		IsAuthenticated: app.isAuthenticated(r),
 		CSRFToken:       nosurf.Token(r),
+		ReceiptMimeType: app.receiptConfig["AcceptedMimeType"],
 	}
 }
 
