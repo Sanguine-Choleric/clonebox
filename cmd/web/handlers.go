@@ -9,9 +9,9 @@ import (
 	"fmt"
 	"io"
 	"mime"
+	"mime/multipart"
 	"net/http"
 	"os"
-	"slices"
 	"snippetbox/internal/models"
 	"snippetbox/internal/validator"
 	"strings"
@@ -56,6 +56,12 @@ type linkShortenForm struct {
 
 type fileShareForm struct {
 	Filename string `form:"file_name"`
+}
+
+type fileUploadForm struct {
+	Description         string                `form:"description"`
+	File                *multipart.FileHeader `form:"-"`
+	validator.Validator `form:"-"`
 }
 
 func (app *application) home(w http.ResponseWriter, r *http.Request) {
@@ -546,35 +552,31 @@ func (app *application) fileDownload(w http.ResponseWriter, r *http.Request) {
 
 func (app *application) billSplit(w http.ResponseWriter, r *http.Request) {
 	data := app.newTemplateData(r)
-	//data.Form = billSplitForm{}
+	data.Form = fileUploadForm{}
 
 	app.render(w, http.StatusOK, "bill_split.tmpl.html", data)
 }
 
-func (app *application) matchesMimeType(pattern, mimeType string) bool {
-	pattern = strings.TrimSpace(pattern)
-	parsedMimetype, _, err := mime.ParseMediaType(mimeType)
-	if err != nil {
-		app.errorLog.Printf("%s", err)
-	}
-	if strings.HasSuffix(pattern, "*") {
-		return strings.HasPrefix(parsedMimetype, strings.TrimSuffix(pattern, "*"))
-	}
-	return pattern == parsedMimetype
-}
-
 func (app *application) billSplitPost(w http.ResponseWriter, r *http.Request) {
-	err := r.ParseMultipartForm(5 << 20)
+	var form fileUploadForm
+	err := app.decodePostForm(r, &form)
 	if err != nil {
 		app.serverError(w, err)
 		return
 	}
 
-	receiptImage, _, err := r.FormFile("file")
+	err = r.ParseMultipartForm(5 << 20)
 	if err != nil {
 		app.serverError(w, err)
 		return
 	}
+
+	receiptImage, header, err := r.FormFile("file")
+	if err != nil {
+		app.serverError(w, err)
+		return
+	}
+	form.File = header
 	defer receiptImage.Close()
 
 	bytes, err := io.ReadAll(receiptImage)
@@ -583,19 +585,19 @@ func (app *application) billSplitPost(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	// TODO Use a flash error instead
-	// Single source of truth for accepted types
-	acceptedTypes := app.receiptConfig["AcceptedMimetypes"]
-	splitTypes := strings.Split(acceptedTypes, ",")
-	mimeType := http.DetectContentType(bytes)
-	// Matches types like image/* and application/pdf
-	validType := slices.ContainsFunc(splitTypes, func(t string) bool {
-		return app.matchesMimeType(t, mimeType)
-	})
+	// Also need to change corresponding template's client side check
+	acceptedTypes := []string{"image/*", "application/pdf"}
 
-	if !validType {
-		app.clientError(w, http.StatusUnsupportedMediaType)
-		app.errorLog.Printf("%s:%s", http.StatusText(http.StatusUnsupportedMediaType), mimeType)
+	// Processing string to test
+	mimeType := http.DetectContentType(bytes)
+	if form.File != nil {
+		form.CheckField(validator.PermittedMimeType(mimeType, acceptedTypes), "file", "Unsupported File Type")
+	}
+
+	if !form.Valid() {
+		data := app.newTemplateData(r)
+		data.Form = form
+		app.render(w, http.StatusUnsupportedMediaType, "bill_split.tmpl.html", data)
 		return
 	}
 
@@ -732,7 +734,11 @@ func (app *application) billSplitPost(w http.ResponseWriter, r *http.Request) {
 		}
 	} else {
 		// Actual LLM call
-		mimeType = http.DetectContentType(bytes)
+		mimeType, _, err = mime.ParseMediaType(mimeType)
+		if err != nil {
+			app.serverError(w, err)
+			return
+		}
 
 		parts := []*genai.Part{
 
@@ -768,6 +774,7 @@ func (app *application) billSplitPost(w http.ResponseWriter, r *http.Request) {
 
 	data := app.newTemplateData(r)
 	data.BillItems = items
+	data.Form = form
 	app.render(w, http.StatusOK, "bill_split.tmpl.html", data)
 }
 

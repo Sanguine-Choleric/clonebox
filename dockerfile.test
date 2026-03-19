@@ -12,5 +12,5 @@ COPY . .
 # RUN go build -o /app/ ./cmd/web
 RUN go build -gcflags="all=-N -l" -o /app/ ./cmd/web
 
-CMD ["/app/web"]
-# CMD ["/dlv", "--listen=:2345", "--headless=true", "--api-version=2", "--accept-multiclient", "exec", "/app/web"]
+# CMD ["/app/web"]
+CMD ["/dlv", "--listen=:2345", "--headless=true", "--api-version=2", "--accept-multiclient", "exec", "/app/web", "-debug"]

@@ -6,16 +6,20 @@
     <form action="/bill_split" method="post" enctype="multipart/form-data">
         <input type="hidden" name="csrf_token" value={{.CSRFToken}}>
         <div>
-            <input type="file" name="file" id="file" accept="{{.ReceiptMimeType}}}}" required>
+            <input type="file" name="file" id="file" accept="image/*,application/pdf" required>
         </div>
         <div>
             <input type="submit" value="Upload">
+            <label></label>
+            {{with .Form.FieldErrors.file}}
+                <label class="error">{{.}}</label>
+            {{end}}
         </div>
     </form>
     {{if .BillItems}}
         <div class="column_btns">
             <button id="add-column-btn">Add Person</button>
-             |
+            |
             <button id="remove-column-btn">Remove Person</button>
         </div>
         <table id="split_table">
