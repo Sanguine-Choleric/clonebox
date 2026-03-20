@@ -1,6 +1,11 @@
 package main
 
 import (
+	"bytes"
+	"image"
+	"image/color"
+	"image/png"
+	"mime/multipart"
 	"net/http"
 	"net/url"
 	"snippetbox/internal/assert"
@@ -352,4 +357,110 @@ func TestFileView(t *testing.T) {
 		})
 
 	}
+}
+
+func TestBillSplit(t *testing.T) {
+	t.Parallel()
+	app := newTestApplication(t)
+	ts := newTestServer(t, app.routes())
+	defer ts.Close()
+
+	t.Run("Unauthorized Bill Split", func(t *testing.T) {
+		code, header, _ := ts.get(t, "/bill_split")
+		assert.Equal(t, code, http.StatusSeeOther)
+		assert.Equal(t, header.Get("Location"), "/user/login")
+	})
+
+	// Testing Mimetype detection handling
+	tests := []struct {
+		name           string
+		fileName       string
+		fileContent    []byte // Using magic bytes approach
+		expectedStatus int
+	}{
+		{
+			name:           "Valid PNG",
+			fileName:       "receipt.png",
+			fileContent:    minimalValidPNG(t),
+			expectedStatus: http.StatusOK,
+		},
+		{
+			name:           "Rejected Text File",
+			fileName:       "notes.txt",
+			fileContent:    []byte("Just some plain text, nothing to see here."),
+			expectedStatus: http.StatusUnsupportedMediaType,
+		},
+		{
+			name:     "Spoofed File (Text disguised as PNG)",
+			fileName: "sneaky.png",
+			// Extension is PNG, but content is text. A secure app should reject this.
+			fileContent:    []byte("I am a text file pretending to be an image"),
+			expectedStatus: http.StatusUnsupportedMediaType,
+		},
+	}
+
+	_, _, body := ts.get(t, "/user/signup")
+	validCSRFToken := extractCSRFToken(t, body)
+	form := url.Values{}
+	form.Add("email", "alice@example.com")
+	form.Add("password", "p@ssw0rd")
+	form.Add("csrf_token", validCSRFToken)
+	code, _, _ := ts.postForm(t, "/user/login", form)
+	assert.Equal(t, code, http.StatusSeeOther)
+
+	// Testing strategy
+	// Manually setup multipart form request
+	// Keep everything in memory
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+
+			// Buffer to hold the multipart body in memory
+			var b bytes.Buffer
+			writer := multipart.NewWriter(&b)
+
+			// Create the form file field
+			part, err := writer.CreateFormFile("file", tt.fileName)
+			if err != nil {
+				t.Fatalf("Failed to create form file: %v", err)
+			}
+
+			// Write the mock file content into the part
+			_, err = part.Write(tt.fileContent)
+			if err != nil {
+				t.Fatalf("Failed to write file content: %v", err)
+			}
+
+			_ = writer.WriteField("csrf_token", validCSRFToken)
+
+			writer.Close()
+
+			// Manual HTTP request
+			req, err := http.NewRequest(http.MethodPost, ts.URL+"/bill_split", &b)
+			if err != nil {
+				t.Fatalf("Failed to create request: %v", err)
+			}
+
+			req.Header.Set("Content-Type", writer.FormDataContentType())
+			req.Header.Set("Referer", ts.URL) // Needed for CSRF validation. Not sure why?
+
+			rs, err := ts.Client().Do(req)
+			if err != nil {
+				t.Fatalf("Failed to execute request: %v", err)
+			}
+			defer rs.Body.Close()
+
+			assert.Equal(t, rs.StatusCode, tt.expectedStatus)
+		})
+	}
+}
+
+func minimalValidPNG(t *testing.T) []byte {
+	t.Helper()
+	var buf bytes.Buffer
+	img := image.NewNRGBA(image.Rect(0, 0, 1, 1))
+	img.Set(0, 0, color.NRGBA{R: 255, G: 0, B: 0, A: 255})
+	if err := png.Encode(&buf, img); err != nil {
+		t.Fatalf("failed to encode test PNG: %v", err)
+	}
+	return buf.Bytes()
 }
