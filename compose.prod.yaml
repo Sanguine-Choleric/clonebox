@@ -1,0 +1,16 @@
+services:
+  web:
+    image: ghcr.io/sanguine-choleric/clonebox-web:latest
+    restart: unless-stopped
+    depends_on:
+      db:
+        condition: service_healthy
+    environment:
+      DB_HOST: db
+      DB_NAME: snippetbox
+      DB_USER: web
+      DB_PASS: /run/secrets/db_password
+    secrets:
+      - db_password
+    volumes:
+      - web_fileShare:/clonebox/uploads

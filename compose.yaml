@@ -1,27 +1,4 @@
 services:
-#  web:
-#    build: dockerfile.test
-#    depends_on:
-#      db:
-#        condition: service_healthy
-#    environment:
-#      DB_HOST: db
-#      DB_NAME: snippetbox
-#      DB_USER: web
-#      DB_PASS: /run/secrets/db_password
-#    secrets:
-#      - db_password
-#    ports:
-#      - "4000:4000"
-#      - "2345:2345"
-#    volumes:
-#      - web_fileShare:/clonebox/uploads
-#    security_opt:
-#      - "seccomp:unconfined"
-#    cap_add:
-#      - SYS_PTRACE
-#    command: /dlv --headless --listen=:2345 --api-version=2 exec /app/web
-
   web:
     build:
       context: .
@@ -40,22 +17,6 @@ services:
       - web_llm_api_key
     volumes:
       - web_fileShare:/clonebox/uploads
-
-#  web:
-#    image: ghcr.io/sanguine-choleric/clonebox-web:latest
-#    restart: unless-stopped
-#    depends_on:
-#      db:
-#        condition: service_healthy
-#    environment:
-#      DB_HOST: db
-#      DB_NAME: snippetbox
-#      DB_USER: web
-#      DB_PASS: /run/secrets/db_password
-#    secrets:
-#      - db_password
-#    volumes:
-#      - web_fileShare:/clonebox/uploads
 
   db:
     image: mariadb:10

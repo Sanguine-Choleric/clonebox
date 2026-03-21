@@ -7,13 +7,13 @@ RUN go mod download
 
 COPY . .
 
-RUN go build -o /app/ ./cmd/web
+RUN --mount=type=cache,target=/root/.cache/go-build \
+    --mount=type=cache,target=/go/pkg/mod \
+    go build -o /app/ ./cmd/web
 
 FROM alpine:latest
 
 WORKDIR /app
 COPY --from=build-stage /app/web /app/web
-EXPOSE 2345
 
-# CMD ["/app/web", "-debug"]
 CMD ["/app/web"]
