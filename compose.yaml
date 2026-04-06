@@ -17,6 +17,8 @@ services:
       - web_llm_api_key
     volumes:
       - web_fileShare:/clonebox/uploads
+    networks:
+      - default
 
   db:
     image: mariadb:10
@@ -38,7 +40,9 @@ services:
       - db_password
       - db_root_password
     ports:
-      - "3306:3306"
+      - "127.0.0.1:3306:3306"
+    networks:
+      - default
 
   proxy:
     image: caddy:2.9
@@ -49,6 +53,8 @@ services:
       - "443:443/udp"
     volumes:
       - ./compose/caddy:/etc/caddy/
+    networks:
+      - default
 
 secrets:
   db_password:
@@ -61,3 +67,7 @@ secrets:
 volumes:
   db_data:
   web_fileShare:
+
+networks:
+  default:
+    enable_ipv6: true

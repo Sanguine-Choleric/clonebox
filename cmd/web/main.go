@@ -92,7 +92,6 @@ func main() {
 	}
 	ctx := context.Background()
 	geminiClient, err := genai.NewClient(ctx, &genai.ClientConfig{
-		// FIXME: Use an env
 		APIKey:  API_KEY,
 		Backend: genai.BackendGeminiAPI,
 	})

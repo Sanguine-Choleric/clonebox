@@ -399,6 +399,7 @@ func TestBillSplit(t *testing.T) {
 		},
 	}
 
+	// Auth
 	_, _, body := ts.get(t, "/user/signup")
 	validCSRFToken := extractCSRFToken(t, body)
 	form := url.Values{}
