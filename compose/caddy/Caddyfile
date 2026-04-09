@@ -26,9 +26,12 @@ http://localhost, https://localhost {
 	reverse_proxy web:4000
 }
 
-http://127.0.0.1, https://127.0.0.1 {
-	reverse_proxy web:4000
-}
-
+#clonebox.app {
+#	reverse_proxy web:4000
+#}
+#
+#www.clonebox.app {
+#	redir https://www.clonebox.app{uri} permanent
+#}
 # Refer to the Caddy docs for more information:
 # https://caddyserver.com/docs/caddyfile

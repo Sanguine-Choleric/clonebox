@@ -10,8 +10,6 @@ services:
       DB_HOST: db
       DB_NAME: snippetbox
       DB_USER: web
-      DB_PASS: /run/secrets/db_password
-      LLM_KEY: /run/secrets/web_llm_api_key
     secrets:
       - db_password
       - web_llm_api_key
@@ -21,7 +19,7 @@ services:
       - default
 
   db:
-    image: mariadb:10
+    image: mariadb:lts-ubi9
     environment:
       MARIADB_ROOT_PASSWORD_FILE: /run/secrets/db_root_password
       MARIADB_USER: web

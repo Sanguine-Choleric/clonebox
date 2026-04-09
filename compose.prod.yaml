@@ -9,7 +9,6 @@ services:
       DB_HOST: db
       DB_NAME: snippetbox
       DB_USER: web
-      DB_PASS: /run/secrets/db_password
     secrets:
       - db_password
     volumes:
