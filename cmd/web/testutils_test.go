@@ -2,6 +2,7 @@ package main
 
 import (
 	"bytes"
+	"clonebox/internal/models/mocks"
 	"html"
 	"io"
 	"log"
@@ -10,7 +11,6 @@ import (
 	"net/http/httptest"
 	"net/url"
 	"regexp"
-	"snippetbox/internal/models/mocks"
 	"strings"
 	"testing"
 	"time"

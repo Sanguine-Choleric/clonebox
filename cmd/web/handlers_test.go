@@ -2,13 +2,13 @@ package main
 
 import (
 	"bytes"
+	"clonebox/internal/assert"
 	"image"
 	"image/color"
 	"image/png"
 	"mime/multipart"
 	"net/http"
 	"net/url"
-	"snippetbox/internal/assert"
 	"testing"
 )
 

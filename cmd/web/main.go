@@ -19,7 +19,7 @@ import (
 	"github.com/alexedwards/scs/v2"
 	"github.com/go-playground/form/v4"
 
-	"snippetbox/internal/models"
+	"clonebox/internal/models"
 
 	_ "github.com/go-sql-driver/mysql"
 )

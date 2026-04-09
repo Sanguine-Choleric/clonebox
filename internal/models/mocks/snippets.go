@@ -1,7 +1,7 @@
 package mocks
 
 import (
-	"snippetbox/internal/models"
+	"clonebox/internal/models"
 	"time"
 )
 

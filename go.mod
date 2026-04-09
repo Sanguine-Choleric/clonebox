@@ -1,4 +1,4 @@
-module snippetbox
+module clonebox
 
 go 1.23.0
 

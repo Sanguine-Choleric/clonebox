@@ -1,6 +1,8 @@
 package main
 
 import (
+	"clonebox/internal/models"
+	"clonebox/internal/validator"
 	"crypto/md5"
 	"crypto/sha256"
 	"database/sql"
@@ -12,8 +14,6 @@ import (
 	"mime/multipart"
 	"net/http"
 	"os"
-	"snippetbox/internal/models"
-	"snippetbox/internal/validator"
 	"strings"
 
 	"github.com/google/uuid"

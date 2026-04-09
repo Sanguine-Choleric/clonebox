@@ -1,7 +1,7 @@
 package models
 
 import (
-	"snippetbox/internal/assert"
+	"clonebox/internal/assert"
 	"testing"
 )
 

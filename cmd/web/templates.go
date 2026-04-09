@@ -1,11 +1,11 @@
 package main
 
 import (
+	"clonebox/internal/models"
+	"clonebox/ui"
 	"html/template"
 	"io/fs"
 	"path/filepath"
-	"snippetbox/internal/models"
-	"snippetbox/ui"
 	"time"
 )
 
