@@ -2,8 +2,7 @@ package main
 
 import (
 	"bytes"
-	"github.com/alexedwards/scs/v2"
-	"github.com/go-playground/form/v4"
+	"clonebox/internal/models/mocks"
 	"html"
 	"io"
 	"log"
@@ -12,10 +11,12 @@ import (
 	"net/http/httptest"
 	"net/url"
 	"regexp"
-	"snippetbox/internal/models/mocks"
 	"strings"
 	"testing"
 	"time"
+
+	"github.com/alexedwards/scs/v2"
+	"github.com/go-playground/form/v4"
 )
 
 // Defines a custom testServer type which embeds a httptest.Server instance.
@@ -39,6 +40,11 @@ func newTestApplication(t *testing.T) *application {
 	sessionManager.Lifetime = 12 * time.Hour
 	sessionManager.Cookie.Secure = true
 	//sessionManager.Cookie.Secure = false
+
+	// Dummy LLM client and config for testing
+	// TODO: Proper interface/mocks
+	debug := true
+
 	return &application{
 		errorLog:       log.New(io.Discard, "", 0),
 		infoLog:        log.New(io.Discard, "", 0),
@@ -49,6 +55,7 @@ func newTestApplication(t *testing.T) *application {
 		users:          &mocks.UserModel{},
 		links:          &mocks.LinkMappingModel{},
 		files:          &mocks.FileModel{},
+		debug:          &debug,
 	}
 }
 

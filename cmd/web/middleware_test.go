@@ -2,10 +2,10 @@ package main
 
 import (
 	"bytes"
+	"clonebox/internal/assert"
 	"io"
 	"net/http"
 	"net/http/httptest"
-	"snippetbox/internal/assert"
 	"testing"
 )
 

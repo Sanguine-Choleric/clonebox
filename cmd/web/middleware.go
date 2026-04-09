@@ -3,9 +3,11 @@ package main
 import (
 	"context"
 	"fmt"
-	"github.com/justinas/nosurf"
 	"log"
 	"net/http"
+	"strings"
+
+	"github.com/justinas/nosurf"
 )
 
 func secureHeaders(next http.Handler) http.Handler {
@@ -23,9 +25,18 @@ func secureHeaders(next http.Handler) http.Handler {
 func (app *application) logRequest(next http.Handler) http.Handler {
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		var remote string
-		if forwarded := r.Header.Get("X-Forwarded-For"); forwarded != "" {
-			remote = forwarded
+		// Finding real ip logic
+		// Cloudflare proxy -> Caddy -> Go
+		// 1. Cloudflare's specific header
+		if cf := r.Header.Get("CF-Connecting-IP"); cf != "" {
+			remote = cf
+		} else if forwarded := r.Header.Get("X-Forwarded-For"); forwarded != "" {
+			// 2. X-Forwarded-For is a comma-separated list
+			// The first IP should be the original client
+			ips := strings.Split(forwarded, ",")
+			remote = strings.TrimSpace(ips[0])
 		} else {
+			// 3. Default fallback
 			remote = r.RemoteAddr
 		}
 

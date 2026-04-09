@@ -1,11 +1,11 @@
 package main
 
 import (
+	"clonebox/internal/models"
+	"clonebox/ui"
 	"html/template"
 	"io/fs"
 	"path/filepath"
-	"snippetbox/internal/models"
-	"snippetbox/ui"
 	"time"
 )
 
@@ -23,6 +23,7 @@ type templateData struct {
 	CSRFToken       string
 	User            *models.User
 	BillItems       []models.BillItem
+	ReceiptMimeType string
 }
 
 // A humanDate function which returns a formatted string representation of a time.Time object.

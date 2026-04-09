@@ -1,7 +1,7 @@
 package main
 
 import (
-	"snippetbox/internal/assert"
+	"clonebox/internal/assert"
 	"testing"
 	"time"
 )

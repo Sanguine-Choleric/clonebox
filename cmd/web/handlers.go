@@ -1,6 +1,8 @@
 package main
 
 import (
+	"clonebox/internal/models"
+	"clonebox/internal/validator"
 	"crypto/md5"
 	"crypto/sha256"
 	"database/sql"
@@ -8,10 +10,10 @@ import (
 	"errors"
 	"fmt"
 	"io"
+	"mime"
+	"mime/multipart"
 	"net/http"
 	"os"
-	"snippetbox/internal/models"
-	"snippetbox/internal/validator"
 	"strings"
 
 	"github.com/google/uuid"
@@ -54,6 +56,12 @@ type linkShortenForm struct {
 
 type fileShareForm struct {
 	Filename string `form:"file_name"`
+}
+
+type fileUploadForm struct {
+	Description         string                `form:"description"`
+	File                *multipart.FileHeader `form:"-"`
+	validator.Validator `form:"-"`
 }
 
 func (app *application) home(w http.ResponseWriter, r *http.Request) {
@@ -544,23 +552,31 @@ func (app *application) fileDownload(w http.ResponseWriter, r *http.Request) {
 
 func (app *application) billSplit(w http.ResponseWriter, r *http.Request) {
 	data := app.newTemplateData(r)
-	//data.Form = billSplitForm{}
+	data.Form = fileUploadForm{}
 
 	app.render(w, http.StatusOK, "bill_split.tmpl.html", data)
 }
 
 func (app *application) billSplitPost(w http.ResponseWriter, r *http.Request) {
-	err := r.ParseMultipartForm(5 << 20)
+	var form fileUploadForm
+	err := app.decodePostForm(r, &form)
 	if err != nil {
 		app.serverError(w, err)
 		return
 	}
 
-	receiptImage, _, err := r.FormFile("file")
+	err = r.ParseMultipartForm(5 << 20)
 	if err != nil {
 		app.serverError(w, err)
 		return
 	}
+
+	receiptImage, header, err := r.FormFile("file")
+	if err != nil {
+		app.serverError(w, err)
+		return
+	}
+	form.File = header
 	defer receiptImage.Close()
 
 	bytes, err := io.ReadAll(receiptImage)
@@ -569,9 +585,19 @@ func (app *application) billSplitPost(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	// TODO Use a flash error instead
-	if http.DetectContentType(bytes) != "image/jpeg" {
-		app.clientError(w, http.StatusUnsupportedMediaType)
+	// Also need to change corresponding template's client side check
+	acceptedTypes := []string{"image/*", "application/pdf"}
+
+	// Processing string to test
+	mimeType := http.DetectContentType(bytes)
+	if form.File != nil {
+		form.CheckField(validator.PermittedMimeType(mimeType, acceptedTypes), "file", "Unsupported File Type")
+	}
+
+	if !form.Valid() {
+		data := app.newTemplateData(r)
+		data.Form = form
+		app.render(w, http.StatusUnsupportedMediaType, "bill_split.tmpl.html", data)
 		return
 	}
 
@@ -697,19 +723,26 @@ func (app *application) billSplitPost(w http.ResponseWriter, r *http.Request) {
 ]`
 		result = &genai.GenerateContentResponse{
 			Candidates: []*genai.Candidate{
-				&genai.Candidate{
+				{
 					Content: &genai.Content{
 						Parts: []*genai.Part{
-							&genai.Part{Text: testString},
+							{Text: testString},
 						},
 					},
 				},
 			},
 		}
 	} else {
-		//Actual LLM call
+		// Actual LLM call
+		mimeType, _, err = mime.ParseMediaType(mimeType)
+		if err != nil {
+			app.serverError(w, err)
+			return
+		}
+
 		parts := []*genai.Part{
-			genai.NewPartFromBytes(bytes, "image/jpeg"),
+
+			genai.NewPartFromBytes(bytes, mimeType),
 			genai.NewPartFromText(
 				"Give me the name, price, and quantity of each item in this receipt. Include tax and other fees as its own item with a name (Tax + fees), price, quantity (1). If the image isn't a receipt, only give a single item with a name (Error), price (0), quantity (0)",
 			),
@@ -721,7 +754,7 @@ func (app *application) billSplitPost(w http.ResponseWriter, r *http.Request) {
 
 		result, err = app.llmClient.Models.GenerateContent(
 			r.Context(),
-			"gemini-2.0-flash-lite",
+			"gemini-2.5-flash-lite",
 			contents,
 			app.llmConfig,
 		)
@@ -739,10 +772,9 @@ func (app *application) billSplitPost(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	app.infoLog.Println(result.Text())
-
 	data := app.newTemplateData(r)
 	data.BillItems = items
+	data.Form = form
 	app.render(w, http.StatusOK, "bill_split.tmpl.html", data)
 }
 

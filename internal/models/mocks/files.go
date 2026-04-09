@@ -1,6 +1,6 @@
 package mocks
 
-import "snippetbox/internal/models"
+import "clonebox/internal/models"
 
 var mockFile = &models.File{
 	ID:          1,

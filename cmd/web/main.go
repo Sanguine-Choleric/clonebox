@@ -19,7 +19,7 @@ import (
 	"github.com/alexedwards/scs/v2"
 	"github.com/go-playground/form/v4"
 
-	"snippetbox/internal/models"
+	"clonebox/internal/models"
 
 	_ "github.com/go-sql-driver/mysql"
 )
@@ -45,12 +45,14 @@ func main() {
 
 	addr := flag.String("addr", ":4000", "HTTP network address")
 
-	raw_password, err := os.ReadFile("/run/secrets/db_password")
-	if err != nil {
-		errorLog.Printf("%s", err)
+	DB_PASS, exists := os.LookupEnv("DB_PASS")
+	if !exists {
+		raw_password, err := os.ReadFile("/run/secrets/db_password")
+		if err != nil {
+			errorLog.Printf("%s", err)
+		}
+		DB_PASS = strings.TrimSpace(string(raw_password))
 	}
-
-	DB_PASS := strings.TrimSpace(string(raw_password))
 
 	default_dsn := fmt.Sprintf("%s:%s@tcp(%s)/%s?parseTime=true",
 		os.Getenv("DB_USER"),
@@ -59,7 +61,7 @@ func main() {
 		os.Getenv("DB_NAME"),
 	)
 
-	// infoLog.Printf("%s", default_dsn)
+	//infoLog.Printf("%s", default_dsn)
 
 	dsn := flag.String("dsn", default_dsn, "MySQL data source name")
 	debug := flag.Bool("debug", false, "Enables debug mode (stack traces)")
@@ -85,14 +87,16 @@ func main() {
 	sessionManager.Cookie.Secure = true
 
 	// Gemini integration - doing this here so i don't create a new geminiClient for every request
-	llm_key, err := os.ReadFile("/run/secrets/web_llm_api_key")
-	API_KEY := strings.TrimSpace(string(llm_key))
-	if err != nil {
-		errorLog.Printf("%s", err)
+	API_KEY, exists := os.LookupEnv("LLM_KEY")
+	if !exists {
+		llm_key, err := os.ReadFile("/run/secrets/web_llm_api_key")
+		if err != nil {
+			errorLog.Printf("%s", err)
+		}
+		API_KEY = strings.TrimSpace(string(llm_key))
 	}
 	ctx := context.Background()
 	geminiClient, err := genai.NewClient(ctx, &genai.ClientConfig{
-		// FIXME: Use an env
 		APIKey:  API_KEY,
 		Backend: genai.BackendGeminiAPI,
 	})

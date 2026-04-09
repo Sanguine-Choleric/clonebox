@@ -1,8 +1,8 @@
 package main
 
 import (
+	"clonebox/ui"
 	"net/http"
-	"snippetbox/ui"
 
 	"github.com/julienschmidt/httprouter" // New import
 	"github.com/justinas/alice"

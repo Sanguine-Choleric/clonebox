@@ -1,27 +1,4 @@
 services:
-#  web:
-#    build: dockerfile.test
-#    depends_on:
-#      db:
-#        condition: service_healthy
-#    environment:
-#      DB_HOST: db
-#      DB_NAME: snippetbox
-#      DB_USER: web
-#      DB_PASS: /run/secrets/db_password
-#    secrets:
-#      - db_password
-#    ports:
-#      - "4000:4000"
-#      - "2345:2345"
-#    volumes:
-#      - web_fileShare:/clonebox/uploads
-#    security_opt:
-#      - "seccomp:unconfined"
-#    cap_add:
-#      - SYS_PTRACE
-#    command: /dlv --headless --listen=:2345 --api-version=2 exec /app/web
-
   web:
     build:
       context: .
@@ -33,32 +10,16 @@ services:
       DB_HOST: db
       DB_NAME: snippetbox
       DB_USER: web
-      DB_PASS: /run/secrets/db_password
-      LLM_KEY: /run/secrets/web_llm_api_key
     secrets:
       - db_password
       - web_llm_api_key
     volumes:
       - web_fileShare:/clonebox/uploads
-
-#  web:
-#    image: ghcr.io/sanguine-choleric/clonebox-web:latest
-#    restart: unless-stopped
-#    depends_on:
-#      db:
-#        condition: service_healthy
-#    environment:
-#      DB_HOST: db
-#      DB_NAME: snippetbox
-#      DB_USER: web
-#      DB_PASS: /run/secrets/db_password
-#    secrets:
-#      - db_password
-#    volumes:
-#      - web_fileShare:/clonebox/uploads
+    networks:
+      - default
 
   db:
-    image: mariadb:10
+    image: mariadb:lts-ubi9
     environment:
       MARIADB_ROOT_PASSWORD_FILE: /run/secrets/db_root_password
       MARIADB_USER: web
@@ -77,7 +38,9 @@ services:
       - db_password
       - db_root_password
     ports:
-      - "3306:3306"
+      - "127.0.0.1:3306:3306"
+    networks:
+      - default
 
   proxy:
     image: caddy:2.9
@@ -87,7 +50,9 @@ services:
       - "443:443"
       - "443:443/udp"
     volumes:
-      - ./compose/:/etc/caddy/
+      - ./compose/caddy:/etc/caddy/
+    networks:
+      - default
 
 secrets:
   db_password:
@@ -100,3 +65,7 @@ secrets:
 volumes:
   db_data:
   web_fileShare:
+
+networks:
+  default:
+    enable_ipv6: true

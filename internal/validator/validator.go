@@ -1,6 +1,7 @@
 package validator
 
 import (
+	"mime"
 	"net/url"
 	"regexp"
 	"strings"
@@ -87,4 +88,29 @@ func IsURL(value string) bool {
 	}
 
 	return true
+}
+
+// PermittedMimeType is used for validating uploaded file types based on provided bytes
+func PermittedMimeType(s string, ss []string) bool {
+	//var acceptedMimes = [2]string{"image/*", "application/pdf"}
+	s = strings.TrimSpace(s)
+	s, _, err := mime.ParseMediaType(s)
+	if err != nil {
+		return false
+	}
+
+	for _, v := range ss {
+		if strings.HasSuffix(v, "/*") {
+			// Wildcard match: "image/*" matches "image/jpeg", "image/png"
+			prefix := strings.TrimSuffix(v, "*")
+			if strings.HasPrefix(s, prefix) {
+				return true
+			}
+		} else if v == s {
+			// Exact match: "application/pdf" == "application/pdf"
+			return true
+		}
+	}
+
+	return false
 }
