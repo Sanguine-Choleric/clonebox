@@ -73,7 +73,7 @@ services:
       - "443:443"
       - "443:443/udp"
     volumes:
-      - ./compose/caddy:/etc/caddy/:Z
+      - ./compose/caddy:/etc/caddy/:z
     networks:
       - default
 

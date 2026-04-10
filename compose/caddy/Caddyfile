@@ -22,16 +22,28 @@
 #	# php_fastcgi localhost:9000
 #}
 
-http://localhost, https://localhost {
-	reverse_proxy web:4000
+{
+    fallback_sni 2a01:4f8:c2c:790e::1
+    acme_ca https://acme-staging-v02.api.letsencrypt.org/directory
 }
 
-#clonebox.app {
-#	reverse_proxy web:4000
-#}
-#
-#www.clonebox.app {
-#	redir https://www.clonebox.app{uri} permanent
-#}
+localhost, 127.0.0.1 {
+    tls internal
+    reverse_proxy web:4000
+}
+
+[2a01:4f8:c2c:790e::1] {
+   tls internal
+   reverse_proxy web:4000
+}
+
+clonebox.app {
+    reverse_proxy web:4000
+}
+
+www.clonebox.app {
+    redir https://clonebox.app {uri} permanent
+}
+
 # Refer to the Caddy docs for more information:
 # https://caddyserver.com/docs/caddyfile
