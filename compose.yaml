@@ -4,11 +4,11 @@ services:
       context: .
       dockerfile: dockerfile
     depends_on:
-      db:
+      postgres:
         condition: service_healthy
     environment:
-      DB_HOST: db
-      DB_NAME: snippetbox
+      DB_HOST: postgres
+      DB_NAME: clonebox
       DB_USER: web
     secrets:
       - db_password
@@ -18,27 +18,50 @@ services:
     networks:
       - default
 
-  db:
-    image: mariadb:lts-ubi9
+#  db:
+#    security_opt: ["label=disable"]
+#    image: mariadb:lts-ubi9
+#    environment:
+#      MARIADB_ROOT_PASSWORD_FILE: /run/secrets/db_root_password
+#      MARIADB_USER: web
+#      MARIADB_PASSWORD_FILE: /run/secrets/db_password
+#      MARIADB_DATABASE: snippetbox
+#      MARIADB_LOG_WARNINGS: 0
+#    healthcheck:
+#      test: ["CMD-SHELL", "mariadb-admin ping --silent"]
+#      interval: 5s
+#      retries: 5
+#      start_period: 30s
+#    volumes:
+#      - ./compose/sql/:/docker-entrypoint-initdb.d:Z
+#      - db_data:/var/lib/mysql
+#    secrets:
+#      - db_password
+#      - db_root_password
+#    ports:
+#      - "127.0.0.1:3306:3306"
+#    networks:
+#      - default
+
+  postgres:
+    security_opt: ["label=disable"]
+    image: postgres:18-alpine
     environment:
-      MARIADB_ROOT_PASSWORD_FILE: /run/secrets/db_root_password
-      MARIADB_USER: web
-      MARIADB_PASSWORD_FILE: /run/secrets/db_password
-      MARIADB_DATABASE: snippetbox
-      MARIADB_LOG_WARNINGS: 0
+      POSTGRES_USER: web
+      POSTGRES_PASSWORD_FILE: /run/secrets/db_password
+      POSTGRES_DB: clonebox
     healthcheck:
-      test: ["CMD-SHELL", "mariadb-admin ping --silent"]
+      test: ["CMD-SHELL", "pg_isready -U web -d clonebox"]
       interval: 5s
       retries: 5
       start_period: 30s
     volumes:
+      - db_data:/var/lib/postgresql/data
       - ./compose/sql/:/docker-entrypoint-initdb.d
-      - db_data:/var/lib/mysql
     secrets:
       - db_password
-      - db_root_password
     ports:
-      - "127.0.0.1:3306:3306"
+      - "127.0.0.1:5432:5432"
     networks:
       - default
 
@@ -50,7 +73,7 @@ services:
       - "443:443"
       - "443:443/udp"
     volumes:
-      - ./compose/caddy:/etc/caddy/
+      - ./compose/caddy:/etc/caddy/:Z
     networks:
       - default
 

@@ -3,11 +3,11 @@ services:
     image: ghcr.io/sanguine-choleric/clonebox-web:latest
     restart: unless-stopped
     depends_on:
-      db:
+      postgres:
         condition: service_healthy
     environment:
-      DB_HOST: db
-      DB_NAME: snippetbox
+      DB_HOST: postgres
+      DB_NAME: clonebox
       DB_USER: web
     secrets:
       - db_password

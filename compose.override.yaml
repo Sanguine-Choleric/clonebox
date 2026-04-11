@@ -4,17 +4,17 @@ services:
       context: .
       dockerfile: dockerfile.test
     depends_on:
-      db:
+      postgres:
         condition: service_healthy
     environment:
-      DB_HOST: db
-      DB_NAME: snippetbox
+      DB_HOST: postgres
+      DB_NAME: clonebox
       DB_USER: web
     secrets:
       - db_password
     ports:
-      - "2345:2345"
-      - "4000:4000"
+      - "127.0.0.1:2345:2345"
+      - "127.0.0.1:4000:4000"
     volumes:
       - web_fileShare:/clonebox/uploads
     security_opt:
