@@ -5,23 +5,23 @@ import (
 	"crypto/tls"
 	"database/sql"
 	"flag"
-	"fmt"
 	"html/template"
 	"log"
 	"net/http"
+	"net/url"
 	"os"
 	"strings"
 	"time"
 
+	"github.com/alexedwards/scs/postgresstore"
 	"google.golang.org/genai"
 
-	"github.com/alexedwards/scs/mysqlstore"
 	"github.com/alexedwards/scs/v2"
 	"github.com/go-playground/form/v4"
 
 	"clonebox/internal/models"
 
-	_ "github.com/go-sql-driver/mysql"
+	_ "github.com/jackc/pgx/v5/stdlib"
 )
 
 type application struct {
@@ -54,16 +54,19 @@ func main() {
 		DB_PASS = strings.TrimSpace(string(raw_password))
 	}
 
-	default_dsn := fmt.Sprintf("%s:%s@tcp(%s)/%s?parseTime=true",
-		os.Getenv("DB_USER"),
-		DB_PASS,
-		os.Getenv("DB_HOST"),
-		os.Getenv("DB_NAME"),
-	)
+	default_dsn := &url.URL{
+		Scheme: "postgres",
+		User:   url.UserPassword(os.Getenv("DB_USER"), DB_PASS),
+		Host:   os.Getenv("DB_HOST") + ":5432",
+		Path:   os.Getenv("DB_NAME"),
+	}
+	q := default_dsn.Query()
+	q.Set("sslmode", "disable")
+	default_dsn.RawQuery = q.Encode()
 
 	//infoLog.Printf("%s", default_dsn)
 
-	dsn := flag.String("dsn", default_dsn, "MySQL data source name")
+	dsn := flag.String("dsn", default_dsn.String(), "Postgres data source name")
 	debug := flag.Bool("debug", false, "Enables debug mode (stack traces)")
 
 	flag.Parse()
@@ -82,7 +85,7 @@ func main() {
 	formDecoder := form.NewDecoder()
 
 	sessionManager := scs.New()
-	sessionManager.Store = mysqlstore.New(db)
+	sessionManager.Store = postgresstore.New(db)
 	sessionManager.Lifetime = 12 * time.Hour
 	sessionManager.Cookie.Secure = true
 
@@ -157,7 +160,7 @@ func main() {
 }
 
 func openDB(dsn string) (*sql.DB, error) {
-	db, err := sql.Open("mysql", dsn)
+	db, err := sql.Open("pgx", dsn)
 	if err != nil {
 		return nil, err
 	}
