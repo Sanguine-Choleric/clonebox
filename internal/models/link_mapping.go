@@ -3,7 +3,8 @@ package models
 import (
 	"database/sql"
 	"errors"
-	"github.com/go-sql-driver/mysql"
+
+	"github.com/jackc/pgx/v5/pgconn"
 )
 
 type LinkMappingModelInterface interface {
@@ -51,7 +52,7 @@ func (m *LinkMappingModel) Latest() ([]*LinkMapping, error) {
 
 func (m *LinkMappingModel) Exists(original string) (bool, error) {
 	var exists bool
-	stmt := `SELECT EXISTS(SELECT TRUE FROM link_mapping WHERE original_link = ?)`
+	stmt := `SELECT EXISTS(SELECT TRUE FROM link_mapping WHERE original_link = $1)`
 
 	err := m.DB.QueryRow(stmt, original).Scan(&exists)
 	return exists, err
@@ -59,7 +60,7 @@ func (m *LinkMappingModel) Exists(original string) (bool, error) {
 
 func (m *LinkMappingModel) GetOriginal(hash string) (string, error) {
 	var originalLink string
-	stmt := `SELECT original_link FROM link_mapping WHERE short_link = ?`
+	stmt := `SELECT original_link FROM link_mapping WHERE short_link = $1`
 	err := m.DB.QueryRow(stmt, hash).Scan(&originalLink)
 	if err != nil {
 		if errors.Is(err, sql.ErrNoRows) {
@@ -73,7 +74,7 @@ func (m *LinkMappingModel) GetOriginal(hash string) (string, error) {
 
 func (m *LinkMappingModel) GetShort(link string) (string, error) {
 	var originalLink string
-	stmt := `SELECT short_link FROM link_mapping WHERE original_link = ?`
+	stmt := `SELECT short_link FROM link_mapping WHERE original_link = $1`
 	err := m.DB.QueryRow(stmt, link).Scan(&originalLink)
 	if err != nil {
 		if errors.Is(err, sql.ErrNoRows) {
@@ -94,12 +95,11 @@ type LinkMapping struct {
 
 func (m *LinkMappingModel) Insert(original, short string) error {
 	stmt := `INSERT INTO link_mapping (original_link, short_link)
-				VALUES (?, ?)`
+				VALUES ($1, $2)`
 	_, err := m.DB.Exec(stmt, original, short)
 	if err != nil {
-		var mySqlErr *mysql.MySQLError
-		if errors.As(err, &mySqlErr) {
-			if mySqlErr.Number == 1062 {
+		if postgresErr, ok := errors.AsType[*pgconn.PgError](err); ok {
+			if postgresErr.Code == "23505" { // https://www.postgresql.org/docs/8.4/errcodes-appendix.html
 				return ErrDuplicateLink
 			}
 		}

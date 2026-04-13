@@ -30,7 +30,7 @@ type SnippetModel struct {
 
 func (m *SnippetModel) Insert(title string, content string, expires int) (string, error) {
 	stmt := `INSERT INTO snippets (public_id, title, content, created, expires) 
-				VALUES(?, ?, ?, UTC_TIMESTAMP(), DATE_ADD(UTC_TIMESTAMP(), INTERVAL ? DAY))`
+				VALUES($1, $2, $3, NOW() AT TIME ZONE 'UTC', DATE_ADD(NOW() AT TIME ZONE 'UTC', INTERVAL $4 DAY))`
 
 	// Quick random id generation
 	const letters = "qwertyuiopasdfghjklzxcvbnmQWERTYUIOPASDFGHJKLZXCVBNM1234567890"
@@ -43,7 +43,7 @@ func (m *SnippetModel) Insert(title string, content string, expires int) (string
 		public_id = string(random) + time.Now().String()[:1]
 
 		// Duplicate check
-		dupeCheckStmt := `SELECT public_id FROM snippets WHERE public_id = ?`
+		dupeCheckStmt := `SELECT public_id FROM snippets WHERE public_id = $1`
 		res := m.DB.QueryRow(dupeCheckStmt, public_id)
 		err := res.Scan()
 		if errors.Is(err, sql.ErrNoRows) {
@@ -70,7 +70,7 @@ func (m *SnippetModel) Insert(title string, content string, expires int) (string
 // Get returns a specific snippet based on its ID.
 func (m *SnippetModel) Get(public_id string) (*Snippet, error) {
 	stmt := `SELECT ID, public_id, title, content, created, expires FROM snippets
-				WHERE expires > UTC_TIMESTAMP() AND public_id = ?`
+				WHERE expires > NOW() AT TIME ZONE 'UTC' AND public_id = $1`
 
 	row := m.DB.QueryRow(stmt, public_id)
 
@@ -93,7 +93,7 @@ func (m *SnippetModel) Get(public_id string) (*Snippet, error) {
 // Latest returns the 10 most recently created snippets.
 func (m *SnippetModel) Latest() ([]*Snippet, error) {
 	stmt := `SELECT ID, public_id, title, created, expires FROM snippets
-				WHERE expires > UTC_TIMESTAMP() ORDER BY ID DESC LIMIT 10`
+				WHERE expires > NOW() AT TIME ZONE 'UTC' ORDER BY ID DESC LIMIT 10`
 
 	// Query() returns a sql.Rows resultset (potentially multiple rows)
 	rows, err := m.DB.Query(stmt)
