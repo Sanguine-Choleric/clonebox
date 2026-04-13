@@ -3,20 +3,34 @@ package models
 import (
 	"database/sql"
 	"fmt"
+	"net/url"
 	"os"
 	"testing"
+
+	_ "github.com/jackc/pgx/v5/stdlib"
 )
 
 func newTestDB(t *testing.T) *sql.DB {
 	// Establishes a sql.DB connection pool for test database. Because setup and teardown scripts contains multiple SQL
 	// statements, have to use the "multiStatements=true" parameter in our DSN. This instructs MySQL database driver to
 	// support executing multiple SQL statements in one db.Exec() call.
-	dsn := fmt.Sprintf("%s:%s@tcp(db)/%s?parseTime=true&multiStatements=true",
-		"test_web",
-		"pass",
-		"test_snippetbox")
+	//dsn := fmt.Sprintf("%s:%s@tcp(db)/%s?parseTime=true&multiStatements=true",
+	//	"test_web",
+	//	"pass",
+	//	"test_snippetbox")
 	//db, err := sql.Open("mysql", "test_web:pass@/test_snippetbox?parseTime=true&multiStatements=true")
-	db, err := sql.Open("mysql", dsn)
+
+	dsn := &url.URL{
+		Scheme: "postgres",
+		User:   url.UserPassword("test_web", "pass"),
+		Host:   os.Getenv("DB_HOST") + ":5432",
+		Path:   fmt.Sprintf("%s%s", "test_", os.Getenv("DB_NAME")),
+	}
+	q := dsn.Query()
+	q.Set("sslmode", "disable")
+	dsn.RawQuery = q.Encode()
+
+	db, err := sql.Open("pgx", dsn.String())
 	if err != nil {
 		t.Fatal(err)
 	}
