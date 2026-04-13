@@ -30,7 +30,8 @@ type SnippetModel struct {
 
 func (m *SnippetModel) Insert(title string, content string, expires int) (string, error) {
 	stmt := `INSERT INTO snippets (public_id, title, content, created, expires) 
-				VALUES($1, $2, $3, NOW() AT TIME ZONE 'UTC', DATE_ADD(NOW() AT TIME ZONE 'UTC', INTERVAL $4 DAY))`
+				VALUES($1, $2, $3, NOW(), NOW() + make_interval(days => $4))
+				RETURNING public_id`
 
 	// Quick random id generation
 	const letters = "qwertyuiopasdfghjklzxcvbnmQWERTYUIOPASDFGHJKLZXCVBNM1234567890"
@@ -53,15 +54,17 @@ func (m *SnippetModel) Insert(title string, content string, expires int) (string
 		}
 	}
 
-	result, err := m.DB.Exec(stmt, public_id, title, content, expires)
+	//result, err := m.DB.Exec(stmt, public_id, title, content, expires)
+	var returned_id string
+	err := m.DB.QueryRow(stmt, public_id, title, content, expires).Scan(&returned_id)
 	if err != nil {
-		return "", errors.New("bad query exec")
+		return "", errors.New("bad query exec: " + err.Error())
 	}
 
 	// Gets ID of newly inserted record in the snippets table
-	_, err = result.LastInsertId()
-	if err != nil {
-		return "", errors.New("bad latest insert id")
+	//_, err = result.LastInsertId()
+	if public_id != returned_id {
+		return "", errors.New("bad latest insert id: " + public_id + " != " + returned_id)
 	}
 
 	return public_id, nil
@@ -70,7 +73,7 @@ func (m *SnippetModel) Insert(title string, content string, expires int) (string
 // Get returns a specific snippet based on its ID.
 func (m *SnippetModel) Get(public_id string) (*Snippet, error) {
 	stmt := `SELECT ID, public_id, title, content, created, expires FROM snippets
-				WHERE expires > NOW() AT TIME ZONE 'UTC' AND public_id = $1`
+				WHERE expires > NOW() AND public_id = $1`
 
 	row := m.DB.QueryRow(stmt, public_id)
 
@@ -93,7 +96,7 @@ func (m *SnippetModel) Get(public_id string) (*Snippet, error) {
 // Latest returns the 10 most recently created snippets.
 func (m *SnippetModel) Latest() ([]*Snippet, error) {
 	stmt := `SELECT ID, public_id, title, created, expires FROM snippets
-				WHERE expires > NOW() AT TIME ZONE 'UTC' ORDER BY ID DESC LIMIT 10`
+				WHERE expires > NOW() ORDER BY ID DESC LIMIT 10`
 
 	// Query() returns a sql.Rows resultset (potentially multiple rows)
 	rows, err := m.DB.Query(stmt)

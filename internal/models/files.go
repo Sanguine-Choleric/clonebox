@@ -30,7 +30,7 @@ type File struct {
 
 func (m *FileModel) Insert(fileName string, uuid string, fileSize int, checksum string, storagePath string) error {
 	stmt := `INSERT INTO files (file_name, file_uuid, file_size, checksum, storage_path, upload_date) VALUES (
-				$1, $2, $3, $4, $5, now() AT TIME ZONE 'UTC')`
+				$1, $2, $3, $4, $5, NOW())`
 
 	_, err := m.DB.Exec(stmt, fileName, uuid, fileSize, checksum, storagePath)
 	if err != nil {

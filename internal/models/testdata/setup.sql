@@ -1,20 +1,20 @@
 CREATE TABLE snippets
 (
-    id      SERIAL          NOT NULL PRIMARY KEY,
-    title   VARCHAR(100)    NOT NULL,
-    content TEXT            NOT NULL,
-    created TIMESTAMP       NOT NULL,
-    expires TIMESTAMP       NOT NULL
+    id      SERIAL       NOT NULL PRIMARY KEY,
+    title   VARCHAR(100) NOT NULL,
+    content TEXT         NOT NULL,
+    created TIMESTAMPTZ  NOT NULL,
+    expires TIMESTAMPTZ  NOT NULL
 );
 CREATE INDEX idx_snippets_created ON snippets (created);
 
 CREATE TABLE users
 (
-    id              SERIAL          NOT NULL PRIMARY KEY,
-    name            VARCHAR(255)    NOT NULL,
-    email           VARCHAR(255)    NOT NULL,
-    hashed_password CHAR(60)        NOT NULL,
-    created         TIMESTAMP       NOT NULL
+    id              SERIAL       NOT NULL PRIMARY KEY,
+    name            VARCHAR(255) NOT NULL,
+    email           VARCHAR(255) NOT NULL,
+    hashed_password CHAR(60)     NOT NULL,
+    created         TIMESTAMPTZ  NOT NULL
 );
 ALTER TABLE users
     ADD CONSTRAINT users_uc_email UNIQUE (email);
@@ -27,9 +27,9 @@ VALUES ('Alice Jones',
 
 CREATE TABLE link_mapping
 (
-    id            SERIAL          NOT NULL PRIMARY KEY,
-    original_link VARCHAR(100)    NOT NULL UNIQUE,
-    short_link    VARCHAR(100)    NOT NULL UNIQUE
+    id            SERIAL       NOT NULL PRIMARY KEY,
+    original_link VARCHAR(100) NOT NULL UNIQUE,
+    short_link    VARCHAR(100) NOT NULL UNIQUE
 );
 
 INSERT INTO link_mapping (original_link, short_link)
@@ -43,7 +43,7 @@ CREATE TABLE files
     file_size    INTEGER             NOT NULL,
     checksum     VARCHAR(100)        NOT NULL,
     storage_path VARCHAR(100)        NOT NULL,
-    upload_date  TIMESTAMP           NOT NULL
+    upload_date  TIMESTAMPTZ         NOT NULL
 );
 CREATE INDEX idx_files_file_name ON files (file_name);
 
