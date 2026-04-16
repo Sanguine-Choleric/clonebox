@@ -34,12 +34,6 @@ func (m *FileModel) Insert(fileName string, uuid string, fileSize int, checksum 
 
 	_, err := m.DB.Exec(stmt, fileName, uuid, fileSize, checksum, storagePath)
 	if err != nil {
-		//if mySqlErr, ok := errors.AsType[*mysql.MySQLError](err); ok {
-		//	if mySqlErr.Number == 1062 {
-		//		return ErrDuplicateUUID
-		//	}
-		//}
-
 		if postgresErr, ok := errors.AsType[*pgconn.PgError](err); ok {
 			if postgresErr.Code == "23505" { // https://www.postgresql.org/docs/8.4/errcodes-appendix.html
 				return ErrDuplicateUUID
@@ -60,9 +54,9 @@ func (m *FileModel) GetByUUID(uuid string) (*File, error) {
 	if err != nil {
 		if errors.Is(err, sql.ErrNoRows) {
 			return nil, ErrNoRecord
-		} else {
-			return nil, err
 		}
+
+		return nil, err
 	}
 
 	return s, nil
@@ -77,9 +71,9 @@ func (m *FileModel) GetByChecksum(checksum string) (*File, error) {
 	if err != nil {
 		if errors.Is(err, sql.ErrNoRows) {
 			return nil, ErrNoRecord
-		} else {
-			return nil, err
 		}
+
+		return nil, err
 	}
 
 	return s, nil

@@ -4,10 +4,10 @@ services:
       context: .
       dockerfile: dockerfile.test
     depends_on:
-      postgres:
+      db:
         condition: service_healthy
     environment:
-      DB_HOST: postgres
+      DB_HOST: db
       DB_NAME: clonebox
       DB_USER: web
     secrets:

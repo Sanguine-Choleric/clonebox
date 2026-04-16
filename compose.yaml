@@ -4,10 +4,10 @@ services:
       context: .
       dockerfile: dockerfile
     depends_on:
-      postgres:
+      db:
         condition: service_healthy
     environment:
-      DB_HOST: postgres
+      DB_HOST: db
       DB_NAME: clonebox
       DB_USER: web
     secrets:
@@ -20,7 +20,7 @@ services:
     networks:
       - default
 
-  postgres:
+  db:
     image: postgres:18-alpine
     environment:
       POSTGRES_USER: web

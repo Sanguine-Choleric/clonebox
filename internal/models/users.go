@@ -45,17 +45,8 @@ func (m *UserModel) Insert(name, email, password string) error {
 
 	_, err = m.DB.Exec(stmt, name, email, string(hashedPassword))
 	if err != nil {
-
-		// If this returns an error, errors.As() checks whether the error has the type *mysql.MySQLError. If it does, the
-		// error will be assigned to the mySQLError variable. Then check whether the error relates to the users_uc_email
-		// key by checking if the error code equals 1062 and the contents of the error message string. If it does,
-		// returns an ErrDuplicateEmail error.
-		//if mySqlErr, ok := errors.AsType[*mysql.MySQLError](err); ok {
-		//	if mySqlErr.Number == 1062 && strings.Contains(mySqlErr.Message, "users_uc_email") {
-		//		return ErrDuplicateEmail
-		//	}
-		//}
-
+		// If error, check whether it's a pgx.PgError. If it is, check whether the error code is 23505 (unique
+		// constraint violation) and the error message contains the string "users_uc_email" (part of index name).
 		if postgresErr, ok := errors.AsType[*pgconn.PgError](err); ok {
 			if postgresErr.Code == "23505" && strings.Contains(postgresErr.Message, "users_uc_email") { // https://www.postgresql.org/docs/8.4/errcodes-appendix.html
 				return ErrDuplicateEmail
@@ -134,17 +125,12 @@ func (m *UserModel) PasswordUpdate(id int, currentPassword string, newPassword s
 	var user User
 	stmt := `SELECT * FROM users WHERE ID = $1`
 	err := m.DB.QueryRow(stmt, id).Scan(&user.ID, &user.Name, &user.Email, &user.HashedPassword, &user.Created)
-	//if errors.Is(err, sql.ErrNoRows) {
-	//	return ErrNoRecord
-	//} else if err != nil {
-	//	return err
-	//}
 	if err != nil {
 		if errors.Is(err, sql.ErrNoRows) {
 			return ErrNoRecord
-		} else {
-			return err
 		}
+
+		return err
 	}
 
 	// Check if currentPassword matches password stored in db
@@ -152,9 +138,9 @@ func (m *UserModel) PasswordUpdate(id int, currentPassword string, newPassword s
 	if err != nil {
 		if errors.Is(err, bcrypt.ErrMismatchedHashAndPassword) {
 			return ErrInvalidCredentials
-		} else {
-			return err
 		}
+
+		return err
 	}
 
 	// Update
