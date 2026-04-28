@@ -3,20 +3,9 @@ services:
     build:
       context: .
       dockerfile: dockerfile.test
-    depends_on:
-      db:
-        condition: service_healthy
-    environment:
-      DB_HOST: db
-      DB_NAME: clonebox
-      DB_USER: web
-    secrets:
-      - db_password
     ports:
       - "127.0.0.1:2345:2345"
       - "127.0.0.1:4000:4000"
-    volumes:
-      - web_fileShare:/clonebox/uploads
     security_opt:
       - "seccomp:unconfined"
       - "label=disable"

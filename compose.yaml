@@ -10,9 +10,6 @@ services:
       DB_HOST: db
       DB_NAME: clonebox
       DB_USER: web
-    secrets:
-      - db_password
-      - web_llm_api_key
     volumes:
       - web_fileShare:/clonebox/uploads
       - ./compose/secrets/web_llm_api_key:/run/secrets/web_llm_api_key:ro,Z
@@ -31,11 +28,9 @@ services:
       interval: 5s
       retries: 5
     volumes:
-      - db_data:/var/lib/postgresql/data
+      - db_data:/var/lib/postgresql/
       - ./compose/sql/:/docker-entrypoint-initdb.d:ro,Z
       - ./compose/secrets/db_password:/run/secrets/db_password:ro,z
-    secrets:
-      - db_password
     ports:
       - "127.0.0.1:5432:5432"
     networks:
@@ -43,27 +38,20 @@ services:
 
   proxy:
     image: caddy:2.9
-    restart: unless-stopped
     ports:
       - "80:80"
       - "443:443"
       - "443:443/udp"
     volumes:
       - ./compose/caddy:/etc/caddy/:Z
+      - proxy_data:/data
     networks:
       - default
-
-secrets:
-  db_password:
-    file: ./compose/secrets/db_password
-  db_root_password:
-    file: ./compose/secrets/db_root_password
-  web_llm_api_key:
-    file: ./compose/secrets/web_llm_api_key
 
 volumes:
   db_data:
   web_fileShare:
+  proxy_data:
 
 networks:
   default:

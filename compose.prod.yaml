@@ -2,14 +2,7 @@ services:
   web:
     image: ghcr.io/sanguine-choleric/clonebox-web:latest
     restart: unless-stopped
-    depends_on:
-      db:
-        condition: service_healthy
-    environment:
-      DB_HOST: db
-      DB_NAME: clonebox
-      DB_USER: web
-    secrets:
-      - db_password
-    volumes:
-      - web_fileShare:/clonebox/uploads
+  db:
+    restart: unless-stopped
+  proxy:
+    restart: unless-stopped
