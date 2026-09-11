@@ -52,6 +52,7 @@ func (m *UserModel) Insert(name, email, password string) error {
 				return ErrDuplicateEmail
 			}
 		}
+		return err
 	}
 
 	return nil

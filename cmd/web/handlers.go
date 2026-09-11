@@ -284,8 +284,10 @@ func (app *application) accountView(w http.ResponseWriter, r *http.Request) {
 	user, err := app.users.Get(userId)
 	if errors.Is(err, models.ErrNoRecord) {
 		http.Redirect(w, r, "/user/login", http.StatusSeeOther)
+		return
 	} else if err != nil {
 		app.serverError(w, err)
+		return
 	}
 
 	data := app.newTemplateData(r)
@@ -382,6 +384,7 @@ func (app *application) linkShortenPost(w http.ResponseWriter, r *http.Request) 
 		short, err := app.links.GetShort(originalLink)
 		if err != nil {
 			app.serverError(w, err)
+			return
 		}
 
 		data := app.newTemplateData(r)

@@ -148,8 +148,8 @@ func main() {
 		Handler:      app.routes(),
 		TLSConfig:    tlsConfig,
 		IdleTimeout:  time.Minute,
-		ReadTimeout:  5 * time.Second,
-		WriteTimeout: 10 * time.Second,
+		ReadTimeout:  5 * time.Second,  // TODO: Figure out better protections when llm bill split calls can exceed this
+		WriteTimeout: 10 * time.Second, // TODO: Same thing
 	}
 
 	infoLog.Printf("Starting server on %s", *addr)
