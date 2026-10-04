@@ -3,10 +3,11 @@ package models
 import (
 	"database/sql"
 	"errors"
-	"github.com/go-sql-driver/mysql"
-	"golang.org/x/crypto/bcrypt"
 	"strings"
 	"time"
+
+	"github.com/jackc/pgx/v5/pgconn"
+	"golang.org/x/crypto/bcrypt"
 )
 
 type UserModelInterface interface {
@@ -40,21 +41,18 @@ func (m *UserModel) Insert(name, email, password string) error {
 	}
 
 	stmt := `INSERT INTO users (name, email, hashed_password, created)
-			 VALUES(?, ?, ?, UTC_TIMESTAMP())`
+			 VALUES($1, $2, $3, NOW())`
 
 	_, err = m.DB.Exec(stmt, name, email, string(hashedPassword))
 	if err != nil {
-
-		// If this returns an error, errors.As() checks whether the error has the type *mysql.MySQLError. If it does, the
-		// error will be assigned to the mySQLError variable. Then check whether the error relates to the users_uc_email
-		// key by checking if the error code equals 1062 and the contents of the error message string. If it does,
-		// returns an ErrDuplicateEmail error.
-		var mySqlErr *mysql.MySQLError
-		if errors.As(err, &mySqlErr) {
-			if mySqlErr.Number == 1062 && strings.Contains(mySqlErr.Message, "users_uc_email") {
+		// If error, check whether it's a pgx.PgError. If it is, check whether the error code is 23505 (unique
+		// constraint violation) and the error message contains the string "users_uc_email" (part of index name).
+		if postgresErr, ok := errors.AsType[*pgconn.PgError](err); ok {
+			if postgresErr.Code == "23505" && strings.Contains(postgresErr.Message, "users_uc_email") { // https://www.postgresql.org/docs/8.4/errcodes-appendix.html
 				return ErrDuplicateEmail
 			}
 		}
+		return err
 	}
 
 	return nil
@@ -67,7 +65,7 @@ func (m *UserModel) Authenticate(email, password string) (int, error) {
 	var id int
 	var hashedPassword []byte
 
-	stmt := `SELECT ID, hashed_password FROM users WHERE email = ?`
+	stmt := `SELECT ID, hashed_password FROM users WHERE email = $1`
 
 	err := m.DB.QueryRow(stmt, email).Scan(&id, &hashedPassword)
 	if err != nil {
@@ -95,7 +93,7 @@ func (m *UserModel) Authenticate(email, password string) (int, error) {
 func (m *UserModel) Exists(id int) (bool, error) {
 	var exists bool
 
-	stmt := "SELECT EXISTS(SELECT true FROM users WHERE ID = ?)"
+	stmt := "SELECT EXISTS(SELECT true FROM users WHERE ID = $1)"
 
 	err := m.DB.QueryRow(stmt, id).Scan(&exists)
 	return exists, err
@@ -104,7 +102,7 @@ func (m *UserModel) Exists(id int) (bool, error) {
 func (m *UserModel) Get(id int) (*User, error) {
 	var user User
 
-	stmt := `SELECT ID, name, email, created FROM users WHERE ID = ?`
+	stmt := `SELECT ID, name, email, created FROM users WHERE ID = $1`
 	err := m.DB.QueryRow(stmt, id).Scan(&user.ID, &user.Name, &user.Email, &user.Created)
 	//if errors.Is(err, sql.ErrNoRows) {
 	//	return nil, ErrNoRecord
@@ -126,19 +124,14 @@ func (m *UserModel) Get(id int) (*User, error) {
 func (m *UserModel) PasswordUpdate(id int, currentPassword string, newPassword string) error {
 	// Retrieve user from ID
 	var user User
-	stmt := `SELECT * FROM users WHERE ID = ?`
+	stmt := `SELECT * FROM users WHERE ID = $1`
 	err := m.DB.QueryRow(stmt, id).Scan(&user.ID, &user.Name, &user.Email, &user.HashedPassword, &user.Created)
-	//if errors.Is(err, sql.ErrNoRows) {
-	//	return ErrNoRecord
-	//} else if err != nil {
-	//	return err
-	//}
 	if err != nil {
 		if errors.Is(err, sql.ErrNoRows) {
 			return ErrNoRecord
-		} else {
-			return err
 		}
+
+		return err
 	}
 
 	// Check if currentPassword matches password stored in db
@@ -146,9 +139,9 @@ func (m *UserModel) PasswordUpdate(id int, currentPassword string, newPassword s
 	if err != nil {
 		if errors.Is(err, bcrypt.ErrMismatchedHashAndPassword) {
 			return ErrInvalidCredentials
-		} else {
-			return err
 		}
+
+		return err
 	}
 
 	// Update
@@ -157,7 +150,7 @@ func (m *UserModel) PasswordUpdate(id int, currentPassword string, newPassword s
 		return err
 	}
 
-	stmt = `UPDATE users SET hashed_password = ? WHERE ID = ?`
+	stmt = `UPDATE users SET hashed_password = $1 WHERE ID = $2`
 	_, err = m.DB.Exec(stmt, string(hashedNewPassword), id)
 	if err != nil {
 		return err
