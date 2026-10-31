@@ -22,29 +22,31 @@
             |
             <button id="remove-column-btn">Remove Person</button>
         </div>
-        <table id="split_table">
-            <colgroup>
-                <col class="name_column">
-                <col class="price_column">
-                <col class="quantity_column">
-            </colgroup>
-            <thead>
-            <tr>
-                <th>Name</th>
-                <th>$</th>
-                <th>#</th>
-            </tr>
-            </thead>
-            <tbody>
-            {{range .BillItems}}
+        <div class="table_scroll">
+            <table id="split_table">
+                <colgroup>
+                    <col class="name_column">
+                    <col class="price_column">
+                    <col class="quantity_column">
+                </colgroup>
+                <thead>
                 <tr>
-                    <td data-type="iname" contenteditable="true">{{.Name}}</td>
-                    <td data-type="price" contenteditable="true">{{.Price}}</td>
-                    <td data-type="quantity" contenteditable="true">{{.Quantity}}</td>
+                    <th>Name</th>
+                    <th>$</th>
+                    <th>#</th>
                 </tr>
-            {{end}}
-            </tbody>
-        </table>
+                </thead>
+                <tbody>
+                {{range .BillItems}}
+                    <tr>
+                        <td data-type="iname" contenteditable="true">{{.Name}}</td>
+                        <td data-type="price" contenteditable="true">{{.Price}}</td>
+                        <td data-type="quantity" contenteditable="true">{{.Quantity}}</td>
+                    </tr>
+                {{end}}
+                </tbody>
+            </table>
+        </div>
         <button id="calc-splits-btn">Calculate Splits</button>
     {{end}}
 {{end}}
