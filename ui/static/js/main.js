@@ -78,6 +78,31 @@ function calc_splits(tableContents, allCheckboxes, totals, peopleNames) {
     }
 }
 
+// Person cell with one checkbox per unit of the item
+function make_person_cell(quantity) {
+    const cell = document.createElement('td')
+    cell.className = 'person_column'
+    if (quantity === 1) {
+        const checkbox = document.createElement('input')
+        checkbox.type = 'checkbox'
+        cell.appendChild(checkbox)
+    } else {
+        for (let i = 0; i < quantity; i++) {
+            const label = document.createElement('label')
+            label.textContent = String(i + 1) + "."
+            cell.appendChild(label)
+
+            const checkbox = document.createElement('input')
+            checkbox.type = 'checkbox'
+            cell.appendChild(checkbox)
+
+            const br = document.createElement('br')
+            cell.appendChild(br)
+        }
+    }
+    return cell
+}
+
 function js_totals_to_html_convert(totals) {
     const main = document.getElementsByTagName('main').item(0)
 
@@ -117,8 +142,14 @@ function js_totals_to_html_convert(totals) {
 
 document.addEventListener('DOMContentLoaded', () => {
     const table = document.getElementById('split_table');
+    // Only the bill split page (after an upload) has the table
+    if (!table) {
+        return
+    }
     const addColBtn = document.getElementById('add-column-btn')
     const rmColBtn = document.getElementById('remove-column-btn')
+    const addRowBtn = document.getElementById('add-row-btn')
+    const rmRowBtn = document.getElementById('remove-row-btn')
     const calcBtn = document.getElementById('calc-splits-btn')
 
     // For type validation
@@ -179,6 +210,12 @@ document.addEventListener('DOMContentLoaded', () => {
         if (validator && !validator(newValue)) {
             // console.error(`Invalid input for type '${type}':`, newValue);
             cell.textContent = originalValue;
+        } else if (type === 'quantity' && newValue !== originalValue) {
+            // Rebuild person checkboxes to match the new unit count (clears this row's checks)
+            const quantity = parseInt(newValue, 10)
+            cell.parentElement.querySelectorAll('td.person_column').forEach(personCell => {
+                personCell.replaceWith(make_person_cell(quantity))
+            })
         } else {
             // if (newValue !== originalValue) {
             //     console.log(`Value changed for '${type}'. New value: ${newValue}. Sending to server...`);
@@ -200,28 +237,8 @@ document.addEventListener('DOMContentLoaded', () => {
 
         const dataRows = table.querySelectorAll('tbody tr')
         dataRows.forEach(row => {
-            const newDataCell = document.createElement('td')
-            newDataCell.className = 'person_column'
             const quantity = parseInt(row.querySelector('td[data-type="quantity"]').textContent)
-            if (quantity === 1) {
-                const checkbox = document.createElement('input')
-                checkbox.type = 'checkbox'
-                newDataCell.appendChild(checkbox)
-            } else {
-                for (let i = 0; i < quantity; i++) {
-                    const label = document.createElement('label')
-                    label.textContent = String(i + 1) + "."
-                    newDataCell.appendChild(label)
-
-                    const checkbox = document.createElement('input')
-                    checkbox.type = 'checkbox'
-                    newDataCell.appendChild(checkbox)
-
-                    const br = document.createElement('br')
-                    newDataCell.appendChild(br)
-                }
-            }
-            row.appendChild(newDataCell)
+            row.appendChild(make_person_cell(quantity))
         })
     })
 
@@ -242,6 +259,35 @@ document.addEventListener('DOMContentLoaded', () => {
             const lastDataCell = row.lastElementChild
             row.removeChild(lastDataCell)
         })
+    })
+
+    // Row add, for items OCR missed
+    addRowBtn.addEventListener('click', (event) => {
+        const row = document.createElement('tr')
+        const defaults = {iname: '', price: '0', quantity: '1'}
+        for (const [type, value] of Object.entries(defaults)) {
+            const cell = document.createElement('td')
+            cell.dataset.type = type
+            cell.contentEditable = 'true'
+            cell.textContent = value
+            row.appendChild(cell)
+        }
+
+        const personCount = table.querySelectorAll('thead th.person_column').length
+        for (let i = 0; i < personCount; i++) {
+            row.appendChild(make_person_cell(1))
+        }
+
+        table.querySelector('tbody').appendChild(row)
+        row.firstElementChild.focus()
+    })
+
+    // Row rm
+    rmRowBtn.addEventListener('click', (event) => {
+        const lastRow = table.querySelector('tbody tr:last-child')
+        if (lastRow) {
+            lastRow.remove()
+        }
     })
 
     calcBtn.addEventListener('click', (event) => {
