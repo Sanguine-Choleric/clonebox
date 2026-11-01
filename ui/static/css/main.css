@@ -18,7 +18,7 @@ body {
 }
 
 header, nav, main, footer {
-    padding: 2px calc((100% - 800px) / 2) 0;
+    padding: 2px max(16px, calc((100% - 800px) / 2)) 0;
 }
 
 main {
@@ -94,9 +94,10 @@ nav {
     padding-top: 17px;
     padding-bottom: 15px;
     background: #F7F9FA;
-    height: 60px;
+    min-height: 60px;
     color: #6A6C6F;
     display: flex;
+    flex-wrap: wrap;
     justify-content: space-between;
     align-items: center;
     width: 100%
@@ -179,6 +180,9 @@ input::file-selector-button {
     cursor: pointer;
     border: 2px solid black;
     border-radius: 3px;
+    font-family: monospace;
+    padding: 2px 9px;
+    margin-right: 9px;
 }
 
 form div {
@@ -251,6 +255,7 @@ button:hover {
 
 .snippet pre {
     padding: 18px;
+    overflow-x: auto;
     border-top: 1px solid #E4E5E7;
     border-bottom: 1px solid #E4E5E7;
 }
@@ -300,9 +305,16 @@ div.error {
     text-align: center;
 }
 
-.column_btns {
+.column_btns, .row_btns {
     display: flex;
+}
+
+.column_btns {
     justify-content: flex-end;
+}
+
+.row_btns {
+    margin-bottom: 54px;
 }
 
 #add-column-btn, #remove-column-btn {
@@ -317,9 +329,40 @@ table {
     margin-bottom: 54px;
 }
 
+/* Bill split table grows a column per person, so let it scroll on its own
+   instead of widening the page. */
+.table_scroll {
+    overflow-x: auto;
+}
+
+.table_scroll table {
+    margin-bottom: 0;
+}
+
+/* Keep item names visible while scrolling across person columns. Sticky cells
+   need an opaque background, and collapsed borders don't move with them, so the
+   divider is an inset shadow. */
+#split_table th:first-child, #split_table td:first-child {
+    position: sticky;
+    left: 0;
+    z-index: 1;
+    background-color: #FFFFFF;
+    box-shadow: inset -1px 0 0 #E4E5E7;
+}
+
+#split_table tr:nth-child(2n) > td:first-child {
+    background-color: #F7F9FA;
+}
+
 td, th {
     text-align: left;
     padding: 9px 18px;
+}
+
+/* Let long URLs/hashes wrap instead of widening the page. Skips the bill split
+   table, whose width:0 price/quantity columns rely on unbroken min-content. */
+table:not(#split_table) td {
+    overflow-wrap: anywhere;
 }
 
 .pair_table th:last-child,
@@ -360,6 +403,10 @@ p {
     margin-bottom: 54px;
 }
 
+ul {
+    padding-left: 2em;
+}
+
 footer {
     border-top: 1px solid #E4E5E7;
     padding-top: 17px;
@@ -368,4 +415,89 @@ footer {
     height: 60px;
     color: #6A6C6F;
     text-align: center;
+}
+
+/* Touch devices: bigger hit areas for text links/buttons and checkboxes. */
+@media (pointer: coarse) {
+    /* Trade nav padding for link padding so the bar stays about the same height. */
+    nav {
+        padding-top: 7px;
+        padding-bottom: 5px;
+    }
+
+    nav a, button {
+        padding-top: 10px;
+        padding-bottom: 10px;
+    }
+
+    .column_btns, .row_btns {
+        align-items: center;
+        gap: 0.5em;
+    }
+
+    li a {
+        display: inline-block;
+        padding: 6px 0;
+    }
+
+    #split_table input[type="checkbox"] {
+        width: 24px;
+        height: 24px;
+        vertical-align: middle;
+    }
+
+    form input[type="radio"] {
+        width: 20px;
+        height: 20px;
+        vertical-align: middle;
+    }
+
+    input::file-selector-button {
+        padding: 10px 14px;
+    }
+}
+
+/* Small screens: halve the large vertical gaps and tighten table cells. */
+@media (max-width: 600px) {
+    header {
+        padding-top: 18px;
+        padding-bottom: 14px;
+    }
+
+    main {
+        margin-top: 27px;
+        margin-bottom: 27px;
+        min-height: calc(100vh - 263px);
+    }
+
+    h2 {
+        margin-bottom: 18px;
+    }
+
+    p, table, .row_btns {
+        margin-bottom: 27px;
+    }
+
+    div.flash, div.error {
+        margin-bottom: 18px;
+    }
+
+    td, th {
+        padding: 9px 12px;
+    }
+
+    /* Tighter link spacing so the nav fits on one line on most phones. When it
+       does wrap, column-gap keeps the groups apart and the second line isn't indented. */
+    nav {
+        column-gap: 1em;
+    }
+
+    nav a, nav div:last-child a, nav form {
+        margin-left: 0;
+        margin-right: 1em;
+    }
+
+    nav div > a:last-child, nav div > form:last-child {
+        margin-right: 0;
+    }
 }

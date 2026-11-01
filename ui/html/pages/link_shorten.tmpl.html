@@ -7,7 +7,7 @@
                         {{with .Form.FieldErrors.originalLink}}
                             <label class='error'>{{.}}</label>
                         {{end}}
-            <input type='text' name='original_link' value='{{.Form.OriginalLink}}'>
+            <input type='text' name='original_link' value='{{.Form.OriginalLink}}' inputmode='url' autocapitalize='off' spellcheck='false'>
         </div>
         <div>
             <label>Shortened:</label>
