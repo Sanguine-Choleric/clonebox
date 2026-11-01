@@ -3,6 +3,7 @@ package main
 import (
 	"clonebox/ui"
 	"net/http"
+	"time"
 
 	"github.com/julienschmidt/httprouter" // New import
 	"github.com/justinas/alice"
@@ -58,7 +59,14 @@ func (app *application) routes() http.Handler {
 	router.Handler(http.MethodGet, "/file", protected.ThenFunc(app.fileUpload))
 	router.Handler(http.MethodPost, "/file", protected.ThenFunc(app.fileUploadPost))
 	router.Handler(http.MethodGet, "/bill_split", protected.ThenFunc(app.billSplit))
-	router.Handler(http.MethodPost, "/bill_split", protected.ThenFunc(app.billSplitPost))
+	// Upload + LLM call can blow past the server's default timeouts. Write deadline covers the whole request, so
+	// includes the upload time, plus some slack for rendering
+	billSplitUpload := alice.New(extendDeadlines(
+		billSplitUploadTimeout,
+		billSplitUploadTimeout+app.llmTimeout+10*time.Second,
+		billSplitMaxUpload,
+	)).Extend(protected)
+	router.Handler(http.MethodPost, "/bill_split", billSplitUpload.ThenFunc(app.billSplitPost))
 
 	standard := alice.New(app.recoverPanic, app.logRequest, secureHeaders)
 	return standard.Then(router)

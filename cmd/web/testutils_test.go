@@ -6,6 +6,7 @@ import (
 	"html"
 	"io"
 	"log"
+	"mime/multipart"
 	"net/http"
 	"net/http/cookiejar"
 	"net/http/httptest"
@@ -143,6 +144,63 @@ func (ts *testServer) postForm(t *testing.T, urlPath string, form url.Values) (i
 	bytes.TrimSpace(body)
 
 	return rs.StatusCode, rs.Header, string(body)
+}
+
+// Logs in as the mock user. Returns a CSRF token valid for subsequent requests
+func (ts *testServer) login(t *testing.T) string {
+	t.Helper()
+	_, _, body := ts.get(t, "/user/signup")
+	csrfToken := extractCSRFToken(t, body)
+
+	form := url.Values{}
+	form.Add("email", "alice@example.com")
+	form.Add("password", "p@ssw0rd")
+	form.Add("csrf_token", csrfToken)
+	code, _, _ := ts.postForm(t, "/user/login", form)
+	if code != http.StatusSeeOther {
+		t.Fatalf("login failed with status %d", code)
+	}
+
+	return csrfToken
+}
+
+// Makes a multipart POST of a single file under the "file" field. Returns response status code and body
+func (ts *testServer) postFile(t *testing.T, urlPath, csrfToken, fileName string, content []byte) (int, string) {
+	t.Helper()
+	// Buffer to hold the multipart body in memory
+	var b bytes.Buffer
+	writer := multipart.NewWriter(&b)
+
+	part, err := writer.CreateFormFile("file", fileName)
+	if err != nil {
+		t.Fatalf("Failed to create form file: %v", err)
+	}
+	_, err = part.Write(content)
+	if err != nil {
+		t.Fatalf("Failed to write file content: %v", err)
+	}
+	_ = writer.WriteField("csrf_token", csrfToken)
+	writer.Close()
+
+	req, err := http.NewRequest(http.MethodPost, ts.URL+urlPath, &b)
+	if err != nil {
+		t.Fatalf("Failed to create request: %v", err)
+	}
+	req.Header.Set("Content-Type", writer.FormDataContentType())
+	req.Header.Set("Referer", ts.URL) // Needed for CSRF validation. Not sure why?
+
+	rs, err := ts.Client().Do(req)
+	if err != nil {
+		t.Fatalf("Failed to execute request: %v", err)
+	}
+	defer rs.Body.Close()
+
+	body, err := io.ReadAll(rs.Body)
+	if err != nil {
+		t.Fatal(err)
+	}
+
+	return rs.StatusCode, string(body)
 }
 
 var csrfTokenRX = regexp.MustCompile(`<input type='hidden' name='csrf_token' value='(.+)'>`)

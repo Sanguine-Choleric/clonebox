@@ -174,6 +174,43 @@ a.button:hover, input[type="submit"]:hover {
     text-decoration: none;
 }
 
+input[type="submit"]:disabled {
+    opacity: 0.6;
+    cursor: progress;
+}
+
+/* Shown while a bill split receipt is uploading/being read */
+.upload_status:not([hidden]) {
+    display: inline-flex;
+    align-items: center;
+    gap: 9px;
+    margin: 18px 0 0 18px;
+    color: #6A6C6F;
+}
+
+.spinner {
+    /* Don't let the wrapping status text squeeze it into an oval on narrow screens */
+    flex-shrink: 0;
+    width: 1em;
+    height: 1em;
+    border: 2px solid #E4E5E7;
+    border-top-color: #1f5b7c;
+    border-radius: 50%;
+    animation: spin 0.8s linear infinite;
+}
+
+@keyframes spin {
+    to {
+        transform: rotate(360deg);
+    }
+}
+
+@media (prefers-reduced-motion: reduce) {
+    .spinner {
+        animation-duration: 2.4s;
+    }
+}
+
 input::file-selector-button {
     background-color: white;
     color: black;
