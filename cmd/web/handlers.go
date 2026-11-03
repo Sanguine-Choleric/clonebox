@@ -3,6 +3,7 @@ package main
 import (
 	"clonebox/internal/models"
 	"clonebox/internal/validator"
+	"context"
 	"crypto/md5"
 	"crypto/sha256"
 	"database/sql"
@@ -15,6 +16,7 @@ import (
 	"net/http"
 	"os"
 	"strings"
+	"time"
 
 	"github.com/google/uuid"
 	"github.com/julienschmidt/httprouter"
@@ -553,6 +555,13 @@ func (app *application) fileDownload(w http.ResponseWriter, r *http.Request) {
 	http.ServeFile(w, r, fileNameAndPath)
 }
 
+const (
+	// Phone photos are typically 2-8MB; Gemini's inline request limit is 20MB
+	billSplitMaxUpload = 10 << 20
+	// Generous enough for a max size upload over a slow mobile connection
+	billSplitUploadTimeout = 30 * time.Second
+)
+
 func (app *application) billSplit(w http.ResponseWriter, r *http.Request) {
 	data := app.newTemplateData(r)
 	data.Form = fileUploadForm{}
@@ -755,13 +764,27 @@ func (app *application) billSplitPost(w http.ResponseWriter, r *http.Request) {
 			genai.NewContentFromParts(parts, genai.RoleUser),
 		}
 
+		// Bounded so a slow/hung upstream can't hold the request open indefinitely. The server write deadline for this
+		// route is extended to cover this (see routes.go)
+		ctx, cancel := context.WithTimeout(r.Context(), app.llmTimeout)
+		defer cancel()
+
 		result, err = app.llmClient.Models.GenerateContent(
-			r.Context(),
+			ctx,
 			"gemini-2.5-flash-lite",
 			contents,
 			app.llmConfig,
 		)
 
+		// Checking ctx rather than err, since the SDK doesn't guarantee wrapping the context error
+		if errors.Is(ctx.Err(), context.DeadlineExceeded) {
+			app.errorLog.Printf("llm generate timed out after %s", app.llmTimeout)
+			form.AddFieldError("file", "Receipt took too long to process, please try again")
+			data := app.newTemplateData(r)
+			data.Form = form
+			app.render(w, http.StatusGatewayTimeout, "bill_split.tmpl.html", data)
+			return
+		}
 		if err != nil {
 			app.serverError(w, fmt.Errorf("failed llm generate: %w", err))
 			return

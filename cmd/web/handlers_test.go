@@ -3,13 +3,17 @@ package main
 import (
 	"bytes"
 	"clonebox/internal/assert"
+	"context"
 	"image"
 	"image/color"
 	"image/png"
-	"mime/multipart"
 	"net/http"
+	"net/http/httptest"
 	"net/url"
 	"testing"
+	"time"
+
+	"google.golang.org/genai"
 )
 
 func TestPing(t *testing.T) {
@@ -399,60 +403,59 @@ func TestBillSplit(t *testing.T) {
 		},
 	}
 
-	// Auth
-	_, _, body := ts.get(t, "/user/signup")
-	validCSRFToken := extractCSRFToken(t, body)
-	form := url.Values{}
-	form.Add("email", "alice@example.com")
-	form.Add("password", "p@ssw0rd")
-	form.Add("csrf_token", validCSRFToken)
-	code, _, _ := ts.postForm(t, "/user/login", form)
-	assert.Equal(t, code, http.StatusSeeOther)
+	validCSRFToken := ts.login(t)
 
-	// Testing strategy
-	// Manually setup multipart form request
-	// Keep everything in memory
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-
-			// Buffer to hold the multipart body in memory
-			var b bytes.Buffer
-			writer := multipart.NewWriter(&b)
-
-			// Create the form file field
-			part, err := writer.CreateFormFile("file", tt.fileName)
-			if err != nil {
-				t.Fatalf("Failed to create form file: %v", err)
-			}
-
-			// Write the mock file content into the part
-			_, err = part.Write(tt.fileContent)
-			if err != nil {
-				t.Fatalf("Failed to write file content: %v", err)
-			}
-
-			_ = writer.WriteField("csrf_token", validCSRFToken)
-
-			writer.Close()
-
-			// Manual HTTP request
-			req, err := http.NewRequest(http.MethodPost, ts.URL+"/bill_split", &b)
-			if err != nil {
-				t.Fatalf("Failed to create request: %v", err)
-			}
-
-			req.Header.Set("Content-Type", writer.FormDataContentType())
-			req.Header.Set("Referer", ts.URL) // Needed for CSRF validation. Not sure why?
-
-			rs, err := ts.Client().Do(req)
-			if err != nil {
-				t.Fatalf("Failed to execute request: %v", err)
-			}
-			defer rs.Body.Close()
-
-			assert.Equal(t, rs.StatusCode, tt.expectedStatus)
+			code, _ := ts.postFile(t, "/bill_split", validCSRFToken, tt.fileName, tt.fileContent)
+			assert.Equal(t, code, tt.expectedStatus)
 		})
 	}
+
+	t.Run("Upload Too Large", func(t *testing.T) {
+		code, _ := ts.postFile(t, "/bill_split", validCSRFToken, "huge.png", make([]byte, billSplitMaxUpload+1))
+		assert.Equal(t, code, http.StatusRequestEntityTooLarge)
+	})
+}
+
+func TestBillSplitLLMTimeout(t *testing.T) {
+	t.Parallel()
+
+	// Stand-in Gemini API that never responds before the client gives up. The request body is never read, so the server
+	// doesn't notice the client disconnecting and r.Context() alone won't unblock. Released explicitly so Close() returns
+	release := make(chan struct{})
+	slowLLM := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		select {
+		case <-r.Context().Done():
+		case <-release:
+		}
+	}))
+	defer slowLLM.Close()
+	defer close(release)
+
+	llmClient, err := genai.NewClient(context.Background(), &genai.ClientConfig{
+		APIKey:      "test",
+		Backend:     genai.BackendGeminiAPI,
+		HTTPOptions: genai.HTTPOptions{BaseURL: slowLLM.URL},
+	})
+	if err != nil {
+		t.Fatal(err)
+	}
+
+	app := newTestApplication(t)
+	debug := false
+	app.debug = &debug
+	app.llmClient = llmClient
+	app.llmTimeout = 100 * time.Millisecond
+
+	ts := newTestServer(t, app.routes())
+	defer ts.Close()
+
+	validCSRFToken := ts.login(t)
+
+	code, body := ts.postFile(t, "/bill_split", validCSRFToken, "receipt.png", minimalValidPNG(t))
+	assert.Equal(t, code, http.StatusGatewayTimeout)
+	assert.StringContains(t, body, "Receipt took too long to process")
 }
 
 func minimalValidPNG(t *testing.T) []byte {

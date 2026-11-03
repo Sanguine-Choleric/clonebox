@@ -6,6 +6,7 @@ import (
 	"log"
 	"net/http"
 	"strings"
+	"time"
 
 	"github.com/justinas/nosurf"
 )
@@ -77,6 +78,31 @@ func (app *application) requireAuthentication(next http.Handler) http.Handler {
 
 		next.ServeHTTP(w, r)
 	})
+}
+
+// extendDeadlines overrides the server-wide Read/WriteTimeout for routes that legitimately need longer, e.g. slow mobile
+// uploads and waiting on the LLM in bill split. Must run before noSurf, since nosurf reads the request body looking for
+// the CSRF token. The body is size capped so the longer read window can't be abused.
+func extendDeadlines(read, write time.Duration, maxBytes int64) func(http.Handler) http.Handler {
+	return func(next http.Handler) http.Handler {
+		return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+			// Reject early when the size is known, otherwise nosurf swallows the MaxBytesReader error and it surfaces as
+			// a confusing CSRF failure
+			if r.ContentLength > maxBytes {
+				http.Error(w, "Upload too large", http.StatusRequestEntityTooLarge)
+				return
+			}
+			r.Body = http.MaxBytesReader(w, r.Body, maxBytes)
+
+			// Only errors if the writer doesn't support deadlines, in which case there's no server timeout to extend
+			rc := http.NewResponseController(w)
+			now := time.Now()
+			_ = rc.SetReadDeadline(now.Add(read))
+			_ = rc.SetWriteDeadline(now.Add(write))
+
+			next.ServeHTTP(w, r)
+		})
+	}
 }
 
 // CSRF Handling with noSurf

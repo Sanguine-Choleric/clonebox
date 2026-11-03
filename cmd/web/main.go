@@ -37,6 +37,7 @@ type application struct {
 	sessionManager *scs.SessionManager
 	llmClient      *genai.Client
 	llmConfig      *genai.GenerateContentConfig
+	llmTimeout     time.Duration
 }
 
 func main() {
@@ -136,6 +137,7 @@ func main() {
 		sessionManager: sessionManager,
 		llmClient:      geminiClient,
 		llmConfig:      geminiConfig,
+		llmTimeout:     30 * time.Second,
 	}
 
 	tlsConfig := &tls.Config{
@@ -143,13 +145,14 @@ func main() {
 	}
 
 	srv := &http.Server{
-		Addr:         *addr,
-		ErrorLog:     errorLog,
-		Handler:      app.routes(),
-		TLSConfig:    tlsConfig,
-		IdleTimeout:  time.Minute,
-		ReadTimeout:  5 * time.Second,  // TODO: Figure out better protections when llm bill split calls can exceed this
-		WriteTimeout: 10 * time.Second, // TODO: Same thing
+		Addr:        *addr,
+		ErrorLog:    errorLog,
+		Handler:     app.routes(),
+		TLSConfig:   tlsConfig,
+		IdleTimeout: time.Minute,
+		// Per-route overrides for slow uploads/LLM calls are done with the extendDeadlines middleware
+		ReadTimeout:  5 * time.Second,
+		WriteTimeout: 10 * time.Second,
 	}
 
 	infoLog.Printf("Starting server on %s", *addr)

@@ -7,6 +7,28 @@ for (let i = 0; i < navLinks.length; i++) {
     }
 }
 
+// Bill split upload progress. Upload + OCR can take several seconds with no other feedback
+const receiptForm = document.getElementById('receipt-form')
+if (receiptForm) {
+    const submitBtn = receiptForm.querySelector('input[type="submit"]')
+    const uploadStatus = document.getElementById('upload-status')
+    const setUploading = (uploading) => {
+        submitBtn.disabled = uploading
+        submitBtn.value = uploading ? 'Uploading...' : 'Upload'
+        uploadStatus.hidden = !uploading
+    }
+
+    // Disabling the button inside the submit handler doesn't cancel the submission; just blocks double submits
+    receiptForm.addEventListener('submit', () => setUploading(true))
+
+    // Back/forward cache restores the page as it was left, i.e. stuck mid-upload
+    window.addEventListener('pageshow', (event) => {
+        if (event.persisted) {
+            setUploading(false)
+        }
+    })
+}
+
 function html_to_js_table_convert(rows, tableContents) {
     for (const row of rows) {
         const rowCells = row.querySelectorAll('td, th')
